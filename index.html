@@ -12,7 +12,7 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         .traffic-light { 
-            width: 18px; height: 18px; border-radius: 50%; cursor: pointer; 
+            width: 14px; height: 14px; border-radius: 50%; cursor: pointer; 
             transition: all 0.2s;
         }
         .custom-scrollbar::-webkit-scrollbar { height: 4px; }
@@ -65,7 +65,7 @@
                         <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
                     </div>
                 </div>
-                <div id="top-events-container" class="flex space-x-4 overflow-x-auto custom-scrollbar pb-4">
+                <div id="top-events-container" class="flex space-x-3 overflow-x-auto custom-scrollbar pb-4">
                     <p class="loading-message text-gray-500">A procurar eventos importantes...</p>
                 </div>
             </section>
@@ -77,14 +77,14 @@
                         <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
                     </div>
                 </div>
-                <div id="top-matches-container" class="flex space-x-4 overflow-x-auto custom-scrollbar pb-4">
+                <div id="top-matches-container" class="flex space-x-3 overflow-x-auto custom-scrollbar pb-4">
                      <p class="loading-message text-gray-500">A procurar jogos 5 estrelas...</p>
                 </div>
             </section>
 
             <section id="week-games">
                 <h2 class="text-xl font-bold text-gray-700 mb-2">Jogos da Semana</h2>
-                <div id="week-games-container" class="grid grid-cols-1 md:grid-cols-7 gap-4">
+                <div id="week-games-container" class="grid grid-cols-1 md:grid-cols-7 gap-3">
                 </div>
             </section>
         </main>
@@ -132,6 +132,7 @@
         const SUDAMERICANA_LEAGUE_ID = '4724';
         const LIBERTADORES_LEAGUE_ID = '4501';
         const CHAMPIONS_LEAGUE_ID = '4480';
+        const GALO_ID = '134299'; 
         
         const STATUS_COLORS = { red: '#ef4444', yellow: '#f59e0b', green: '#22c55e' };
 
@@ -167,11 +168,10 @@
 
         function createTopEventCard(league, event) {
             return `
-                <div class="bg-white p-2 rounded-lg shadow-sm flex-shrink-0 w-44 event-card">
-                    <img src="${league.logo}" alt="${league.name}" class="h-10 mx-auto mb-2 object-contain">
-                    <p class="text-xs text-center font-semibold text-gray-600 truncate">${league.name}</p>
-                    <p class="text-center text-sm font-bold mt-1">${formatDateForCard(event.dateEvent)}</p>
-                    <div class="mt-3 flex justify-center items-center gap-2 px-1">
+                <div class="bg-white p-2 rounded-lg shadow-sm flex-shrink-0 w-28 flex flex-col items-center justify-center event-card">
+                    <img src="${league.logo}" alt="${league.name}" class="h-10 object-contain" title="${league.name}">
+                    <p class="text-center text-xs font-bold mt-2">${formatDateForCard(event.dateEvent)}</p>
+                    <div class="mt-2 flex justify-center items-center gap-2 px-1">
                         ${getStatusTrafficLights(event)}
                     </div>
                 </div>
@@ -187,26 +187,27 @@
                     case 'SEMI_FINAL': sashText = 'Semifinal'; sashColorClass = 'bg-gray-400'; break;
                     case 'QUARTAS_FINAL': sashText = 'Quartas'; sashColorClass = 'bg-yellow-700'; break;
                 }
-                if (sashText) sashHTML = `<div class="sash ${sashColorClass}">${sashText}</div>`;
+                if (sashText) {
+                    sashHTML = `<div class="sash ${sashColorClass}">${sashText}</div>`;
+                }
+            } else if (event.idHomeTeam === GALO_ID || event.idAwayTeam === GALO_ID) {
+                sashHTML = `<div class="sash bg-red-600">GALO</div>`;
             }
-            
-            const starRatingHTML = `<div class="flex items-center gap-1 text-xs text-gray-600"><i class="fas fa-star text-yellow-500"></i><span class="font-bold">${event.importanceScore || 0}</span></div>`;
             
             let cardContentHTML = '';
             if (event.idLeague == UFC_LEAGUE_ID) {
                 let ufcEventName = (event.strEvent || '').includes(':') ? event.strEvent.split(':')[1].trim() : event.strEvent;
-                cardContentHTML = `...`; // Omitted for brevity, assumed unchanged
+                cardContentHTML = `...`;
             } else {
                  cardContentHTML = `
                      <div>
                         <div class="flex justify-between items-center text-xs font-semibold text-gray-500 px-1">
                             <span>${event.strLeague}</span>
-                            ${starRatingHTML}
                         </div>
-                        <div class="flex items-center justify-around my-2">
-                            <img src="${event.strHomeTeamBadge}" alt="${event.strHomeTeam}" class="h-10 w-10 object-contain">
-                            <span class="font-bold text-gray-400">vs</span>
-                            <img src="${event.strAwayTeamBadge}" alt="${event.strAwayTeam}" class="h-10 w-10 object-contain">
+                        <div class="flex items-center justify-around my-1.5">
+                            <img src="${event.strHomeTeamBadge}" alt="${event.strHomeTeam}" class="h-8 w-8 object-contain">
+                            <span class="font-bold text-gray-400 text-sm">vs</span>
+                            <img src="${event.strAwayTeamBadge}" alt="${event.strAwayTeam}" class="h-8 w-8 object-contain">
                         </div>
                         <div class="text-center">
                             <p class="text-sm font-bold">${formatDateForCard(event.dateEvent)}</p>
@@ -217,10 +218,10 @@
             }
 
             return `
-                <div class="bg-white p-2 rounded-lg shadow-sm flex-shrink-0 w-56 flex flex-col justify-between relative overflow-hidden">
+                <div class="bg-white p-1.5 rounded-lg shadow-sm flex-shrink-0 w-44 flex flex-col justify-between relative overflow-hidden">
                     ${sashHTML}
                     ${cardContentHTML}
-                    <div class="mt-2 flex justify-center items-center gap-2 px-1">
+                    <div class="mt-1.5 flex justify-center items-center gap-2 px-1">
                         ${getStatusTrafficLights(event)}
                     </div>
                 </div>
@@ -228,10 +229,6 @@
         }
         
         function createWeekGameItem(event) {
-            const isGamified = event.statuses && Object.values(event.statuses).some(s => s !== 'red');
-            const isImportant = event.importanceScore >= 7 || event.matchType || event.idLeague == UFC_LEAGUE_ID || event.idLeague == SUDAMERICANA_LEAGUE_ID;
-            const shouldShowStar = isImportant || isGamified;
-            
             let eventName = (event.idLeague == UFC_LEAGUE_ID) 
                 ? ((event.strEvent || '').includes(':') ? event.strEvent.split(':')[1].trim() : event.strEvent)
                 : (event.strHomeTeam && event.strAwayTeam ? `${event.strHomeTeam} x ${event.strAwayTeam}` : event.strEvent || '');
@@ -239,9 +236,8 @@
             if (!eventName) return '';
 
             return `
-                <div class="flex items-center justify-between py-1">
+                <div class="flex items-center justify-between py-0.5">
                     <span class="text-xs text-gray-600 truncate pr-2" title="${event.strEvent}">${eventName}</span>
-                    ${shouldShowStar ? '<i class="fas fa-star text-yellow-500 text-xs flex-shrink-0"></i>' : ''}
                 </div>
             `;
         }
@@ -264,46 +260,48 @@
             });
         }
         
+        // --- FUNÇÃO ATUALIZADA COM A LÓGICA DE PRIORIDADE PARA FINAIS ---
         function renderTopMatches(events) {
             const container = document.getElementById('top-matches-container');
-            const GALO_ID = '134299';
-            const TARGET_SIZE = 6;
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const limitDate = new Date();
-            limitDate.setDate(today.getDate() + 14);
 
-            const upcomingEvents = events.filter(event => {
-                const eventDate = new Date(event.dateEvent + 'T00:00:00');
-                return eventDate >= today && eventDate <= limitDate;
-            });
+            const TIER_1_THRESHOLD = 9; // Jogos 9 e 10 estrelas
+            const TIER_2_THRESHOLD = 7; // Jogos 7 e 8 estrelas
 
-            const topMatchesMap = new Map();
-            const fiveStarMatches = upcomingEvents.filter(e => e.matchType);
-            fiveStarMatches.forEach(match => topMatchesMap.set(match.idEvent, match));
+            const matchesToDisplayMap = new Map();
 
-            const nextAlexPereiraFight = upcomingEvents.find(e => e.idLeague == UFC_LEAGUE_ID && (e.strEvent || '').toLowerCase().includes('alex pereira'));
-            if (nextAlexPereiraFight) topMatchesMap.set(nextAlexPereiraFight.idEvent, nextAlexPereiraFight);
+            // 1. Adiciona todas as finais, semifinais, etc., com prioridade máxima
+            const stageMatches = events.filter(event => event.matchType);
+            stageMatches.forEach(event => matchesToDisplayMap.set(event.idEvent, event));
 
-            const nextGaloMatch = upcomingEvents.find(e => e.idHomeTeam === GALO_ID || e.idAwayTeam === GALO_ID);
-            if (nextGaloMatch) topMatchesMap.set(nextGaloMatch.idEvent, nextGaloMatch);
-            
-            if (topMatchesMap.size < TARGET_SIZE) {
-                const sortedByScore = [...upcomingEvents].sort((a, b) => (b.importanceScore || 0) - (a.importanceScore || 0));
-                for (const event of sortedByScore) {
-                    if (topMatchesMap.size >= TARGET_SIZE) break;
-                    if (!topMatchesMap.has(event.idEvent)) topMatchesMap.set(event.idEvent, event);
-                }
+            // 2. Define a lista de jogos de alta pontuação (com fallback)
+            let starMatches = [];
+            const tier1Matches = events.filter(event =>
+                (event.importanceScore || 0) >= TIER_1_THRESHOLD
+            );
+
+            if (tier1Matches.length > 0) {
+                starMatches = tier1Matches;
+            } else {
+                starMatches = events.filter(event =>
+                    (event.importanceScore || 0) >= TIER_2_THRESHOLD
+                );
             }
 
-            const combinedMatches = Array.from(topMatchesMap.values()).sort((a, b) => new Date(a.dateEvent) - new Date(b.dateEvent));
-            container.innerHTML = combinedMatches.length > 0 ? combinedMatches.map(createTopMatchCard).join('') : '<p class="text-gray-500">Nenhum próximo jogo importante encontrado.</p>';
+            // 3. Adiciona os jogos de alta pontuação à lista (não sobrescreve as finais já adicionadas)
+            starMatches.forEach(event => matchesToDisplayMap.set(event.idEvent, event));
+            
+            // 4. Converte o mapa para um array e ordena por data
+            const combinedMatches = Array.from(matchesToDisplayMap.values());
+            const sortedMatches = combinedMatches.sort((a, b) => new Date(a.dateEvent) - new Date(b.dateEvent));
+
+            // 5. Renderiza a lista final
+            container.innerHTML = sortedMatches.length > 0
+                ? sortedMatches.map(createTopMatchCard).join('')
+                : '<p class="text-gray-500">Nenhum jogo de destaque encontrado.</p>';
         }
         
         function getGamePriorityScore(game) {
             let score = game.importanceScore || 0;
-            const isGamified = game.statuses && Object.values(game.statuses).some(s => s !== 'red');
-            if (isGamified) score += 100;
             if (game.matchType === 'FINAL') score += 50;
             if (game.matchType === 'SEMI_FINAL') score += 40;
             if (game.matchType === 'QUARTAS_FINAL') score += 30;
@@ -339,7 +337,7 @@
                 if (sortedGames.length === 0) {
                     gamesHTML = '<p class="text-xs text-gray-400">Sem jogos de destaque.</p>';
                 }
-                container.innerHTML += `<div class="bg-gray-800 p-3 rounded-lg"><h3 class="text-white font-bold text-center mb-2">${date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.','')}</h3><div class="bg-white p-2 rounded-md space-y-1 min-h-[100px]">${gamesHTML}</div></div>`;
+                container.innerHTML += `<div class="bg-gray-800 p-2 rounded-lg"><h3 class="text-white font-bold text-center text-sm mb-1.5">${date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.','')}</h3><div class="bg-white p-1.5 rounded-md space-y-1">${gamesHTML}</div></div>`;
             });
         }
         
