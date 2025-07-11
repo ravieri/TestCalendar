@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Marketing Esportivo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .traffic-light { width: 14px; height: 14px; border-radius: 50%; cursor: pointer; transition: all 0.2s; }
+        .traffic-light.active { transform: scale(1.2); box-shadow: 0 0 8px rgba(59, 130, 246, 0.7); }
+        .custom-scrollbar::-webkit-scrollbar { height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #e2e8f0; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #94a3b8; border-radius: 20px; }
+        
+        .sash {
+            position: absolute;
+            top: 12px;
+            right: -30px;
+            transform: rotate(45deg);
+            padding: 2px 30px;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            text-transform: uppercase;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body class="antialiased text-gray-800">
+
+    <div id="page-loader" class="fixed inset-0 bg-gray-100 z-50 flex flex-col items-center justify-center">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-500"></div>
+        <p class="mt-4 text-lg text-gray-600">A carregar os jogos...</p>
+    </div>
+
+    <div id="main-content" class="hidden">
+        <header class="bg-white shadow-md">
+            <div class="container mx-auto px-6 py-3 flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <img src="https://placehold.co/100x40/000000/FFFFFF?text=H2BET" alt="Logo H2BET" class="h-10">
+                    <div id="user-info-header" class="hidden items-center gap-2 text-sm text-gray-600">
+                        <i class="fas fa-user-check"></i>
+                        <span id="user-name-display" class="font-medium"></span>
+                    </div>
+                </div>
+                <nav class="flex space-x-2">
+                    <button class="px-4 py-2 bg-gray-700 text-white rounded-md text-sm font-medium hover:bg-gray-800 transition-colors">Home</button>
+                    <button class="px-4 py-2 bg-gray-200 text-gray-600 rounded-md text-sm font-medium cursor-not-allowed">Calendar</button>
+                    <button class="px-4 py-2 bg-gray-200 text-gray-600 rounded-md text-sm font-medium cursor-not-allowed">Gantt</button>
+                </nav>
+            </div>
+        </header>
+
+        <main class="container mx-auto px-6 py-4">
+             <div id="name-registration" class="hidden mb-6 p-4 bg-white rounded-lg shadow-md max-w-md mx-auto">
+                <label for="name-input" class="block text-sm font-medium text-gray-700">Para colaborar, digite seu nome:</label>
+                <div class="mt-1 flex rounded-md shadow-sm">
+                    <input type="text" id="name-input" class="flex-1 block w-full rounded-none rounded-l-md border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Seu Nome">
+                    <button id="save-name-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-indigo-600 hover:bg-indigo-700">Salvar</button>
+                </div>
+            </div>
+            <section id="top-events" class="mb-6">
+                <div class="flex items-center mb-2">
+                    <h2 class="text-xl font-bold text-gray-700 mr-4">Próximos Eventos</h2>
+                    <div class="flex text-yellow-400">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                </div>
+                <div id="top-events-container" class="flex space-x-4 overflow-x-auto custom-scrollbar pb-4">
+                    <p class="loading-message text-gray-500">A procurar eventos importantes...</p>
+                </div>
+            </section>
+
+            <section id="top-matches" class="mb-6">
+                 <div class="flex items-center mb-2">
+                    <h2 class="text-xl font-bold text-gray-700 mr-4">Próximos Jogos</h2>
+                    <div class="flex text-yellow-400">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                </div>
+                <div id="top-matches-container" class="flex space-x-4 overflow-x-auto custom-scrollbar pb-4">
+                     <p class="loading-message text-gray-500">A procurar jogos 5 estrelas...</p>
+                </div>
+            </section>
+
+            <section id="week-games">
+                <h2 class="text-xl font-bold text-gray-700 mb-2">Jogos da Semana</h2>
+                <div id="week-games-container" class="grid grid-cols-1 md:grid-cols-7 gap-4">
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <div id="global-tooltip" class="fixed w-48 bg-gray-800 text-white text-xs rounded-lg p-3 z-50 opacity-0 transition-opacity duration-200 pointer-events-none">
+        </div>
+
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB6zquSsTLCnJ_1WWQm8kb-HkpipU8PrTA",
+            authDomain: "marketing-esportivo.firebaseapp.com",
+            projectId: "marketing-esportivo",
+            storageBucket: "marketing-esportivo.appspot.com",
+            messagingSenderId: "53646634690",
+            appId: "1:53646634690:web:3e45f49d82d64601c0555b"
+        };
+        
+        const API_KEY = '373862';
+        const BASE_URL = `https://www.thesportsdb.com/api/v1/json/${API_KEY}`;
+        
+        let db, currentUserId, currentUserName;
+        let allEvents = new Map();
+        let userNamesCache = new Map();
+
+        const globalTooltip = document.getElementById('global-tooltip');
+
+        const IMPORTANT_LEAGUES = {
+            '4351': 'https://www.thesportsdb.com/images/media/league/badge/ny47lx1701964009.png',
+            '4331': 'https://upload.wikimedia.org/wikipedia/pt/f/f9/Bundesliga_logo_%282017%29.png',
+            '4335': 'https://www.thesportsdb.com/images/media/league/badge/7onmyv1534768460.png',
+            '4328': 'https://footballgroundguide.com/app/uploads/2023/12/premiereleague-logo-768x768.png',
+            '4480': 'https://ssl.gstatic.com/onebox/media/sports/logos/YijZbE4UZ_09JrTvBU91fg_64x64.png',
+            '4501': 'https://s3.static.brasilescola.uol.com.br/be/2022/03/taca-da-libertadores.jpg',
+            '4724': 'https://upload.wikimedia.org/wikipedia/pt/thumb/e/e4/Conmebol_Sudamericana_logo.png/428px-Conmebol_Sudamericana_logo.png',
+            '4443': 'https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcQfDSkxta9cASfWZmVMXvVf5L1x-CJTGLGmjYt5GyBC7V01VVoq'
+        };
+
+        const TEAM_LEVELS = {
+            '134465': 5, '134287': 5, '133729': 5, '133739': 5, '133613': 5, '133614': 5, '133668': 5, '133693': 5, '133692': 5, '133689': 5, '133702': 5, '133604': 5, '133612': 5, '133610': 5, '133732': 5, '133667': 5,
+            '134299': 4, '134291': 4, '134284': 4, '134296': 4, '134288': 4, '134281': 4, '133616': 4, '134777': 4, '133671': 4, '133700': 4, '133699': 4, '133695': 4, '133734': 4, '133698': 4, '133696': 4, '133601': 4, '133619': 4, '133690': 4,
+            '134282': 3, '134294': 3, '134286': 3, '134293': 3, '134285': 3, '136186': 3, '133736': 3, '133731': 3, '133735': 3, '133728': 3, '133737': 3, '133694': 3, '133701': 3,
+            '134280': 2, '134744': 2, '134736': 2, '135887': 2, '133636': 2
+        };
+        const MAIN_LEAGUE_IDS = ['4351', '4331', '4335', '4328', '4480', '4501', '4443', '4724'];
+        const FOOTBALL_TEAM_IDS = Object.keys(TEAM_LEVELS);
+        // =======================================================
+        // CONSTANTES CORRIGIDAS
+        // =======================================================
+        const UFC_LEAGUE_ID = '4443';
+        const SUDAMERICANA_LEAGUE_ID = '4724';
+        const LIBERTADORES_LEAGUE_ID = '4501';
+        const CHAMPIONS_LEAGUE_ID = '4480';
+
+        function createTopEventCard(league, event) {
+            const signals = event.signals || {};
+            const userSignal = signals[currentUserId];
+            const hasSignals = Object.values(signals).some(v => v !== null);
+
+            const userIconHTML = `<i class="fa-solid fa-users text-gray-400 cursor-pointer user-icon text-xs ${hasSignals ? 'visible' : 'invisible'}" data-event-id="${event.idEvent}"></i>`;
+            const trafficLightsHTML = `
+                <div class="flex gap-2">
+                    <div class="traffic-light bg-green-400 ${userSignal === 'green' ? 'active' : ''}" data-color="green" data-event-id="${event.idEvent}"></div>
+                    <div class="traffic-light bg-yellow-400 ${userSignal === 'yellow' ? 'active' : ''}" data-color="yellow" data-event-id="${event.idEvent}"></div>
+                    <div class="traffic-light bg-red-400 ${userSignal === 'red' ? 'active' : ''}" data-color="red" data-event-id="${event.idEvent}"></div>
+                </div>
+            `;
+
+            return `
+                <div class="bg-white p-2 rounded-lg shadow-sm flex-shrink-0 w-44 event-card">
+                    <img src="${league.logo}" alt="${league.name}" class="h-10 mx-auto mb-2 object-contain">
+                    <p class="text-xs text-center font-semibold text-gray-600 truncate">${league.name}</p>
+                    <p class="text-center text-sm font-bold mt-1">${formatDateForCard(event.dateEvent)}</p>
+                    <div class="mt-2 flex justify-between items-center px-1">
+                        <div class="flex-1 flex justify-center">
+                           ${trafficLightsHTML}
+                        </div>
+                        ${userIconHTML}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function hideTooltip() {
+            globalTooltip.classList.remove('opacity-100');
+            globalTooltip.classList.add('opacity-0');
+            globalTooltip.classList.add('pointer-events-none');
+        }
+
+        async function showTooltip(e) {
+            const icon = e.target;
+            const eventId = icon.dataset.eventId;
+            const event = allEvents.get(eventId);
+            if (!event || !event.signals) return;
+
+            await fetchUserNames(Object.keys(event.signals));
+            
+            const signalsByColor = { green: [], yellow: [], red: [] };
+            for(const userId in event.signals) {
+                const color = event.signals[userId];
+                if(signalsByColor[color] && color) {
+                    const name = userNamesCache.get(userId) || userId.substring(0, 6);
+                    signalsByColor[color].push(name);
+                }
+            }
+            
+            const innerHTML = `
+                <div class="font-bold text-green-400">Criar:</div>
+                <ul class="list-disc list-inside mb-2 pl-1">${signalsByColor.green.length > 0 ? signalsByColor.green.map(name => `<li>${name}</li>`).join('') : '<li class="list-none text-gray-400">Ninguém</li>'}</ul>
+                <div class="font-bold text-yellow-400">Talvez:</div>
+                <ul class="list-disc list-inside mb-2 pl-1">${signalsByColor.yellow.length > 0 ? signalsByColor.yellow.map(name => `<li>${name}</li>`).join('') : '<li class="list-none text-gray-400">Ninguém</li>'}</ul>
+                <div class="font-bold text-red-400">Ignorar:</div>
+                <ul class="list-disc list-inside pl-1">${signalsByColor.red.length > 0 ? signalsByColor.red.map(name => `<li>${name}</li>`).join('') : '<li class="list-none text-gray-400">Ninguém</li>'}</ul>
+                <div class="absolute w-3 h-3 bg-gray-800 transform rotate-45 -bottom-1 left-1/2 -translate-x-1/2"></div>
+            `;
+            globalTooltip.innerHTML = innerHTML;
+
+            const iconRect = icon.getBoundingClientRect();
+            
+            globalTooltip.classList.remove('opacity-0');
+            await new Promise(requestAnimationFrame); 
+            
+            const tooltipRect = globalTooltip.getBoundingClientRect();
+
+            let top = iconRect.top - tooltipRect.height - 8;
+            let left = iconRect.left + (iconRect.width / 2) - (tooltipRect.width / 2);
+
+            if (top < 0) { top = iconRect.bottom + 8; }
+            if (left < 0) { left = 5; }
+            if (left + tooltipRect.width > window.innerWidth) { left = window.innerWidth - tooltipRect.width - 5; }
+            
+            globalTooltip.style.top = `${top}px`;
+            globalTooltip.style.left = `${left}px`;
+            
+            globalTooltip.classList.add('opacity-100');
+            globalTooltip.classList.remove('pointer-events-none');
+        }
+
+        function createTopMatchCard(event) {
+            const signals = event.signals || {};
+            const userSignal = signals[currentUserId];
+            const hasSignals = Object.values(signals).some(v => v !== null);
+
+            let sashHTML = '';
+            if (event.matchType) {
+                let sashText = '';
+                let sashColorClass = '';
+                switch (event.matchType) {
+                    case 'FINAL':
+                        sashText = 'Final';
+                        sashColorClass = 'bg-yellow-500';
+                        break;
+                    case 'SEMI_FINAL':
+                        sashText = 'Semifinal';
+                        sashColorClass = 'bg-gray-400';
+                        break;
+                    case 'QUARTAS_FINAL':
+                        sashText = 'Quartas';
+                        sashColorClass = 'bg-yellow-700';
+                        break;
+                }
+                if (sashText) {
+                    sashHTML = `<div class="sash ${sashColorClass}">${sashText}</div>`;
+                }
+            }
+            
+            const starRatingHTML = `
+                <div class="flex items-center gap-1 text-xs text-gray-600">
+                    <i class="fas fa-star text-yellow-500"></i>
+                    <span class="font-bold">${event.importanceScore || 0}</span>
+                </div>
+            `;
+            
+            let cardContentHTML = '';
+            if (event.idLeague == UFC_LEAGUE_ID) {
+                let ufcEventName = event.strEvent || '';
+                if (ufcEventName.includes(':')) {
+                    ufcEventName = ufcEventName.split(':')[1].trim();
+                }
+                cardContentHTML = `
+                    <div>
+                        <div class="flex justify-between items-center text-xs font-semibold text-gray-500 px-1">
+                            <span>${event.strLeague}</span>
+                            ${starRatingHTML}
+                        </div>
+                        <div class="flex items-center justify-center my-2 h-10">
+                            <img src="${IMPORTANT_LEAGUES[UFC_LEAGUE_ID]}" alt="UFC" class="h-10 object-contain">
+                        </div>
+                        <div class="text-center">
+                            <p class="text-sm font-bold truncate px-1" title="${event.strEvent}">${ufcEventName}</p>
+                            <p class="text-sm font-bold">${formatDateForCard(event.dateEvent)}</p>
+                            <p class="text-xs text-gray-600">${event.strTime.substring(0,5)}</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                cardContentHTML = `
+                     <div>
+                        <div class="flex justify-between items-center text-xs font-semibold text-gray-500 px-1">
+                            <span>${event.strLeague}</span>
+                            ${starRatingHTML}
+                        </div>
+                        <div class="flex items-center justify-around my-2">
+                            <img src="${event.strHomeTeamBadge}" alt="${event.strHomeTeam}" class="h-10 w-10 object-contain">
+                            <span class="font-bold text-gray-400">vs</span>
+                            <img src="${event.strAwayTeamBadge}" alt="${event.strAwayTeam}" class="h-10 w-10 object-contain">
+                        </div>
+                        <div class="text-center">
+                            <p class="text-sm font-bold">${formatDateForCard(event.dateEvent)}</p>
+                            <p class="text-xs text-gray-600">${event.strTime.substring(0,5)}</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const userIconHTML = `<i class="fa-solid fa-users text-gray-400 cursor-pointer user-icon text-xs ${hasSignals ? 'visible' : 'invisible'}" data-event-id="${event.idEvent}"></i>`;
+            const trafficLightsHTML = `
+                <div class="flex gap-2">
+                    <div class="traffic-light bg-green-400 ${userSignal === 'green' ? 'active' : ''}" data-color="green" data-event-id="${event.idEvent}"></div>
+                    <div class="traffic-light bg-yellow-400 ${userSignal === 'yellow' ? 'active' : ''}" data-color="yellow" data-event-id="${event.idEvent}"></div>
+                    <div class="traffic-light bg-red-400 ${userSignal === 'red' ? 'active' : ''}" data-color="red" data-event-id="${event.idEvent}"></div>
+                </div>
+            `;
+
+            return `
+                <div class="bg-white p-2 rounded-lg shadow-sm flex-shrink-0 w-56 flex flex-col justify-between relative overflow-hidden">
+                    ${sashHTML}
+                    ${cardContentHTML}
+                    <div class="mt-2 flex justify-between items-center px-1">
+                        <div class="flex-1 flex justify-center">
+                            ${trafficLightsHTML}
+                        </div>
+                        ${userIconHTML}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function createWeekGameItem(event) {
+            const isGamified = event.signals && Object.keys(event.signals).length > 0;
+            const isImportant = event.importanceScore >= 7 || event.matchType || event.idLeague == UFC_LEAGUE_ID || event.idLeague == SUDAMERICANA_LEAGUE_ID;
+            const shouldShowStar = isImportant || isGamified;
+            
+            let eventName;
+            if (event.idLeague == UFC_LEAGUE_ID) {
+                eventName = (event.strEvent || '').includes(':') ? event.strEvent.split(':')[1].trim() : event.strEvent;
+            } else if (event.strHomeTeam && event.strAwayTeam) {
+                eventName = `${event.strHomeTeam} x ${event.strAwayTeam}`;
+            } else {
+                eventName = event.strEvent || '';
+            }
+
+            if (!eventName) {
+                return '';
+            }
+
+            return `
+                <div class="flex items-center justify-between py-1">
+                    <span class="text-xs text-gray-600 truncate pr-2" title="${event.strEvent}">${eventName}</span>
+                    ${shouldShowStar ? '<i class="fas fa-star text-yellow-500 text-xs flex-shrink-0"></i>' : ''}
+                </div>
+            `;
+        }
+
+        function formatDateForCard(dateStr) {
+            const date = new Date(dateStr + 'T00:00:00');
+            return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '');
+        }
+        
+        function renderTopEvents(events) {
+            const container = document.getElementById('top-events-container');
+            container.innerHTML = '';
+            const processedLeagues = new Set();
+
+            events.forEach(event => {
+                if (IMPORTANT_LEAGUES[event.idLeague] && !processedLeagues.has(event.idLeague)) {
+                    const leagueInfo = { id: event.idLeague, name: event.strLeague, logo: IMPORTANT_LEAGUES[event.idLeague] };
+                    container.innerHTML += createTopEventCard(leagueInfo, event);
+                    processedLeagues.add(event.idLeague);
+                }
+            });
+        }
+        
+        function renderTopMatches(events) {
+            const container = document.getElementById('top-matches-container');
+            const GALO_ID = '134299';
+            const TARGET_SIZE = 6;
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const limitDate = new Date();
+            limitDate.setDate(today.getDate() + 14);
+
+            const upcomingEvents = events.filter(event => {
+                const eventDate = new Date(event.dateEvent + 'T00:00:00');
+                return eventDate >= today && eventDate <= limitDate;
+            });
+
+            const topMatchesMap = new Map();
+
+            const fiveStarMatches = upcomingEvents.filter(e => e.matchType);
+            fiveStarMatches.forEach(match => topMatchesMap.set(match.idEvent, match));
+
+            const nextAlexPereiraFight = upcomingEvents.find(e => 
+                e.idLeague == UFC_LEAGUE_ID && 
+                (e.strEvent || '').toLowerCase().includes('alex pereira')
+            );
+            if (nextAlexPereiraFight) {
+                topMatchesMap.set(nextAlexPereiraFight.idEvent, nextAlexPereiraFight);
+            }
+
+            const nextGaloMatch = upcomingEvents.find(e => e.idHomeTeam === GALO_ID || e.idAwayTeam === GALO_ID);
+            if (nextGaloMatch) {
+                topMatchesMap.set(nextGaloMatch.idEvent, nextGaloMatch);
+            }
+            
+            if (topMatchesMap.size < TARGET_SIZE) {
+                const sortedByScore = [...upcomingEvents].sort((a, b) => (b.importanceScore || 0) - (a.importanceScore || 0));
+                for (const event of sortedByScore) {
+                    if (topMatchesMap.size >= TARGET_SIZE) break;
+                    if (!topMatchesMap.has(event.idEvent)) {
+                        topMatchesMap.set(event.idEvent, event);
+                    }
+                }
+            }
+
+            const combinedMatches = Array.from(topMatchesMap.values())
+                                         .sort((a, b) => new Date(a.dateEvent) - new Date(b.dateEvent));
+            
+            if (combinedMatches.length > 0) {
+                container.innerHTML = combinedMatches.map(createTopMatchCard).join('');
+            } else {
+                container.innerHTML = '<p class="text-gray-500">Nenhum próximo jogo importante encontrado.</p>';
+            }
+        }
+        
+        // =======================================================
+        // FUNÇÃO ATUALIZADA - renderWeekGames
+        // =======================================================
+        function getGamePriorityScore(game) {
+            let score = game.importanceScore || 0;
+            const isGamified = game.signals && Object.keys(game.signals).length > 0;
+
+            if (isGamified) score += 100;
+            if (game.matchType === 'FINAL') score += 50;
+            if (game.matchType === 'SEMI_FINAL') score += 40;
+            if (game.matchType === 'QUARTAS_FINAL') score += 30;
+            if (game.idLeague == LIBERTADORES_LEAGUE_ID) score += 25;
+            if (game.idLeague == CHAMPIONS_LEAGUE_ID) score += 25;
+            if (game.idLeague == SUDAMERICANA_LEAGUE_ID) score += 25; 
+            if (game.idLeague == UFC_LEAGUE_ID) score += 15;
+
+            return score;
+        }
+
+        function renderWeekGames(events) {
+            const container = document.getElementById('week-games-container');
+            container.innerHTML = '';
+            const weekDates = [];
+            const today = new Date();
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(today);
+                date.setDate(today.getDate() + i);
+                weekDates.push(date);
+            }
+
+            weekDates.forEach(date => {
+                const dateString = date.toISOString().split('T')[0];
+                const gamesForDay = events.filter(e => e.dateEvent === dateString);
+                
+                const sortedGames = gamesForDay.sort((a, b) => getGamePriorityScore(b) - getGamePriorityScore(a));
+                
+                const initialGames = sortedGames.slice(0, 4);
+                const hiddenGames = sortedGames.slice(4);
+
+                let gamesHTML = initialGames.map(createWeekGameItem).join('');
+                
+                if (hiddenGames.length > 0) {
+                    gamesHTML += `<div id="more-games-${dateString}" class="hidden space-y-1 mt-1">${hiddenGames.map(createWeekGameItem).join('')}</div>`;
+                    gamesHTML += `<button class="ver-mais-btn text-xs text-blue-500 hover:underline mt-2 w-full text-center" data-target="more-games-${dateString}">Ver mais</button>`;
+                }
+                
+                if (sortedGames.length === 0) {
+                    gamesHTML = '<p class="text-xs text-gray-400">Sem jogos de destaque.</p>';
+                }
+
+                container.innerHTML += `
+                    <div class="bg-gray-800 p-3 rounded-lg">
+                        <h3 class="text-white font-bold text-center mb-2">${date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.','')}</h3>
+                        <div class="bg-white p-2 rounded-md space-y-1 min-h-[100px]">
+                            ${gamesHTML}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        
+        function attachAllListeners() {
+            document.querySelectorAll('.user-icon').forEach(icon => {
+                if (icon.getAttribute('data-listener-attached')) return;
+                icon.addEventListener('mouseenter', showTooltip);
+                icon.addEventListener('mouseleave', hideTooltip);
+                icon.setAttribute('data-listener-attached', 'true');
+            });
+            document.querySelectorAll('.traffic-light').forEach(button => {
+                if (button.getAttribute('data-listener-attached')) return;
+                button.addEventListener('click', handleTrafficLightClick);
+                button.setAttribute('data-listener-attached', 'true');
+            });
+            document.querySelectorAll('.ver-mais-btn').forEach(button => {
+                if (button.getAttribute('data-listener-attached')) return;
+                button.addEventListener('click', (e) => {
+                    const targetId = e.target.dataset.target;
+                    const targetElement = document.getElementById(targetId);
+                    if (targetElement) {
+                        targetElement.classList.toggle('hidden');
+                        e.target.textContent = targetElement.classList.contains('hidden') ? 'Ver mais' : 'Ver menos';
+                    }
+                });
+                button.setAttribute('data-listener-attached', 'true');
+            });
+        }
+
+        const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+        
+        function processAndAddEvent(event) {
+            if (!allEvents.has(event.idEvent)) {
+                const homeLevel = TEAM_LEVELS[event.idHomeTeam] || 1;
+                const awayLevel = TEAM_LEVELS[event.idAwayTeam] || 1;
+                event.importanceScore = homeLevel + awayLevel;
+                
+                const leagueNameLower = (event.strLeague || '').toLowerCase();
+                const roundNameLower = (event.intRound || '').toString().toLowerCase();
+                const finalKeywords = ['final', 'cup final', 'world cup', 'decisão'];
+                const semiFinalKeywords = ['semi-final', 'semifinal'];
+                const quarterFinalKeywords = ['quarter-final', 'quarterfinal', 'quartas de final'];
+                
+                if (finalKeywords.some(k => leagueNameLower.includes(k) || roundNameLower.includes(k))) event.matchType = 'FINAL';
+                else if (semiFinalKeywords.some(k => leagueNameLower.includes(k) || roundNameLower.includes(k))) event.matchType = 'SEMI_FINAL';
+                else if (quarterFinalKeywords.some(k => leagueNameLower.includes(k) || roundNameLower.includes(k))) event.matchType = 'QUARTAS_FINAL';
+                
+                allEvents.set(event.idEvent, event);
+            }
+        }
+
+        async function fetchAllData() {
+            for (const leagueId of MAIN_LEAGUE_IDS) {
+                try {
+                    const response = await fetch(`${BASE_URL}/eventsnextleague.php?id=${leagueId}`);
+                    if (!response.ok) continue;
+                    const result = await response.json();
+                    if (result.events) {
+                        result.events.forEach(processAndAddEvent);
+                    }
+                } catch (error) { console.error(`Error fetching for league ${leagueId}:`, error); }
+                await sleep(50);
+            }
+
+            for (const teamId of FOOTBALL_TEAM_IDS) {
+                try {
+                    const response = await fetch(`${BASE_URL}/eventsnext.php?id=${teamId}`);
+                    if (!response.ok) continue;
+                    const result = await response.json();
+                    if (result.events) {
+                        result.events.forEach(processAndAddEvent);
+                    }
+                } catch (error) { console.error(`Error fetching for team ${teamId}:`, error); }
+                await sleep(50);
+            }
+            
+            const signalPromises = Array.from(allEvents.keys()).map(eventId => {
+                return getDoc(doc(db, "match_signals", eventId)).then(doc => {
+                    const event = allEvents.get(eventId);
+                    if (event) {
+                        event.signals = doc.data()?.signals || {};
+                        allEvents.set(eventId, event);
+                    }
+                });
+            });
+            await Promise.all(signalPromises);
+
+            const eventsArray = Array.from(allEvents.values()).sort((a, b) => new Date(a.dateEvent) - new Date(b.dateEvent));
+            
+            renderTopEvents(eventsArray);
+            renderTopMatches(eventsArray);
+            renderWeekGames(eventsArray);
+
+            attachAllListeners();
+
+            document.getElementById('page-loader').style.display = 'none';
+            document.getElementById('main-content').classList.remove('hidden');
+            
+            allEvents.forEach(event => listenToEventSignals(event.idEvent));
+        }
+
+        async function fetchUserNames(userIds) {
+            const usersToFetch = userIds.filter(id => !userNamesCache.has(id));
+            if (usersToFetch.length === 0) return;
+            const fetchPromises = usersToFetch.map(id => getDoc(doc(db, "users", id)));
+            const userDocs = await Promise.all(fetchPromises);
+            userDocs.forEach(userDoc => { if (userDoc.exists()) userNamesCache.set(userDoc.id, userDoc.data().name); });
+        }
+
+        function listenToEventSignals(eventId) {
+            onSnapshot(doc(db, "match_signals", eventId), async (docSnapshot) => {
+                const signals = docSnapshot.data()?.signals || {};
+                const event = allEvents.get(eventId);
+
+                if (event) {
+                    event.signals = signals;
+                    allEvents.set(eventId, event);
+                    
+                    const userSignal = signals[currentUserId];
+                    const trafficLightsForEvent = document.querySelectorAll(`.traffic-light[data-event-id="${eventId}"]`);
+                    trafficLightsForEvent.forEach(light => {
+                        if (light.dataset.color === userSignal) {
+                            light.classList.add('active');
+                        } else {
+                            light.classList.remove('active');
+                        }
+                    });
+
+                    const icon = document.querySelector(`.user-icon[data-event-id="${eventId}"]`);
+                    if(icon){
+                       const hasSignals = Object.values(signals).some(v => v !== null);
+                       if(hasSignals) {
+                           icon.classList.remove('invisible');
+                       } else {
+                           icon.classList.add('invisible');
+                       }
+                    }
+                }
+            });
+        }
+
+        async function handleTrafficLightClick(e) {
+            const eventId = e.target.dataset.eventId, color = e.target.dataset.color;
+            if (!eventId || !color || !currentUserId) return;
+            const eventDocRef = doc(db, "match_signals", eventId);
+            const currentEvent = allEvents.get(eventId);
+            const currentSignals = currentEvent.signals || {};
+            const newSignal = currentSignals[currentUserId] === color ? null : color;
+            await setDoc(eventDocRef, { signals: { ...currentSignals, [currentUserId]: newSignal } }, { merge: true });
+        }
+        
+        async function saveName() {
+            const nameInput = document.getElementById('name-input');
+            const name = nameInput.value.trim();
+            if (name && currentUserId) {
+                await setDoc(doc(db, "users", currentUserId), { name: name });
+                
+                document.getElementById('user-name-display').textContent = name;
+                document.getElementById('user-info-header').classList.remove('hidden');
+                document.getElementById('user-info-header').classList.add('flex');
+
+                document.getElementById('name-registration').style.display = 'none';
+            }
+        }
+
+        async function initialize() {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+
+            let localId = localStorage.getItem('marketingToolUserId');
+            if (!localId) {
+                localId = crypto.randomUUID();
+                localStorage.setItem('marketingToolUserId', localId);
+            }
+            currentUserId = localId;
+
+            const userDoc = await getDoc(doc(db, "users", currentUserId));
+            if (userDoc.exists()) {
+                document.getElementById('user-name-display').textContent = userDoc.data().name;
+                document.getElementById('user-info-header').classList.remove('hidden');
+                document.getElementById('user-info-header').classList.add('flex');
+
+            } else {
+                document.getElementById('name-registration').style.display = 'block';
+            }
+            
+            fetchAllData();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initialize();
+            document.getElementById('save-name-btn').addEventListener('click', saveName);
+        });
+    </script>
+</body>
+</html>
