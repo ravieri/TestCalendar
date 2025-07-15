@@ -11,8 +11,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .traffic-light { 
-            width: 20px; height: 20px; border-radius: 50%; cursor: pointer; 
+        .traffic-light {
+            width: 25px; height: 23px; border-radius: 50%; cursor: pointer;
             transition: all 0.2s;
             display: flex;
             align-items: center;
@@ -25,7 +25,7 @@
         .custom-scrollbar::-webkit-scrollbar { height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #e2e8f0; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #94a3b8; border-radius: 20px; }
-        
+
         .sash {
             position: absolute; top: 12px; right: -30px;
             transform: rotate(45deg); padding: 2px 30px;
@@ -56,11 +56,38 @@
         .visibility-toggle:hover {
             background-color: rgba(0, 0, 0, 0.8);
         }
+        .event-card-match {
+            cursor: pointer;
+        }
+        #undo-button:disabled {
+            background-color: #d1d5db;
+            cursor: not-allowed;
+            color: #6b7280;
+        }
+        /* Classe para ocultar o header */
+        .header-hidden {
+            transform: translateY(-100%);
+        }
+        /* Zona de ativação do header */
+        #header-trigger-zone {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px; /* Altura da área de ativação */
+            z-index: 100; /* Garante que esteja acima de outros elementos */
+        }
+
+        /* Estilo para o cursor enquanto arrasta */
+        .dragging {
+            cursor: grabbing;
+            cursor: -webkit-grabbing;
+            user-select: none; /* Impede a seleção de texto durante o arraste */
+        }
     </style>
 </head>
 <body class="antialiased text-gray-800">
-
-    <div id="page-loader" class="fixed inset-0 bg-gray-100 z-50 flex flex-col items-center justify-center">
+    <div id="header-trigger-zone"></div> <div id="page-loader" class="fixed inset-0 bg-gray-100 z-50 flex flex-col items-center justify-center">
         <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-500"></div>
         <p class="mt-4 text-lg text-gray-600">A carregar os jogos...</p>
         <div class="w-64 bg-gray-300 rounded-full h-2.5 mt-4">
@@ -69,57 +96,75 @@
         <p id="progress-text" class="mt-2 text-sm font-medium text-gray-600">0%</p>
     </div>
 
+    <header class="bg-white shadow-md fixed w-full top-0 z-30 transition-transform duration-300 ease-in-out">
+        <div class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <img src="https://placehold.co/100x40/000000/FFFFFF?text=H2BET" alt="Logo H2BET" class="h-10">
+            </div>
+            <nav class="flex space-x-2">
+                <button class="px-4 py-2 bg-gray-700 text-white rounded-md text-sm font-medium hover:bg-gray-800 transition-colors">Home</button>
+                <button class="px-4 py-2 bg-gray-200 text-gray-600 rounded-md text-sm font-medium cursor-not-allowed">Calendar</button>
+                <button class="px-4 py-2 bg-gray-200 text-gray-600 rounded-md text-sm font-medium cursor-not-allowed">Gantt</button>
+            </nav>
+        </div>
+    </header>
 
     <div id="main-content" class="hidden">
-        <header class="bg-white shadow-md">
-            <div class="container mx-auto px-6 py-3 flex justify-between items-center">
-                <div class="flex items-center gap-4">
-                    <img src="https://placehold.co/100x40/000000/FFFFFF?text=H2BET" alt="Logo H2BET" class="h-10">
-                </div>
-                <nav class="flex space-x-2">
-                    <button class="px-4 py-2 bg-gray-700 text-white rounded-md text-sm font-medium hover:bg-gray-800 transition-colors">Home</button>
-                    <button class="px-4 py-2 bg-gray-200 text-gray-600 rounded-md text-sm font-medium cursor-not-allowed">Calendar</button>
-                    <button class="px-4 py-2 bg-gray-200 text-gray-600 rounded-md text-sm font-medium cursor-not-allowed">Gantt</button>
-                </nav>
-            </div>
-        </header>
-
-        <main class="container mx-auto px-6 py-4">
-            <section id="top-events" class="mb-6">
-                <div class="flex items-center mb-2">
-                    <h2 class="text-xl font-bold text-gray-700 mr-4">Próximos Eventos</h2>
-                    <div class="flex text-yellow-400">
-                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+        <main id="main-container" class="container mx-auto px-6 py-4">
+             <section id="top-events" class="mb-6">
+                <div class="flex items-start">
+                    <div class="w-32 flex-shrink-0 pr-4 mt-2">
+                        <h2 class="text-base font-semibold text-gray-600">Próximos Eventos</h2>
+                        <div class="flex text-yellow-400 text-xs">
+                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        </div>
                     </div>
-                </div>
-                <div id="top-events-container" class="flex space-x-3 overflow-x-auto custom-scrollbar pb-4">
-                    <p class="loading-message text-gray-500">A procurar eventos importantes...</p>
+                    <div id="top-events-container" class="flex-grow flex space-x-1 overflow-x-auto custom-scrollbar pb-4">
+                        <p class="loading-message text-gray-500">A procurar eventos importantes...</p>
+                    </div>
                 </div>
             </section>
 
             <section id="top-matches" class="mb-6">
-                 <div class="flex items-center mb-2">
-                    <h2 class="text-xl font-bold text-gray-700 mr-4">Próximos Jogos</h2>
-                    <div class="flex text-yellow-400">
-                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                <div class="flex items-start">
+                    <div class="w-32 flex-shrink-0 pr-4 mt-2">
+                        <h2 class="text-base font-semibold text-gray-600">Próximos Jogos</h2>
+                         <div class="flex text-yellow-400 text-xs">
+                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        </div>
                     </div>
-                </div>
-                <div id="top-matches-container" class="flex space-x-3 overflow-x-auto custom-scrollbar pb-4">
-                     <p class="loading-message text-gray-500">A procurar jogos 5 estrelas...</p>
+                    <div id="top-matches-container" class="flex-grow flex space-x-1 overflow-x-auto custom-scrollbar pb-4">
+                         <p class="loading-message text-gray-500">A procurar jogos 5 estrelas...</p>
+                    </div>
                 </div>
             </section>
 
             <section id="week-games">
-                <h2 class="text-xl font-bold text-gray-700 mb-2">Jogos da Semana</h2>
-                <div id="week-games-container" class="grid grid-cols-1 md:grid-cols-7 gap-3">
-                </div>
-            </section>
+    <div class="flex items-start">
+        <div class="w-32 flex-shrink-0 pr-4 mt-2">
+            <h2 class="text-base font-semibold text-gray-600">Jogos da Semana</h2>
+        </div>
+        <div id="week-games-container" class="flex-grow grid grid-cols-1 md:grid-cols-7 gap-3">
+            </div>
+    </div>
+</section>
         </main>
     </div>
 
-    <div id="edit-mode-toast" class="hidden fixed bottom-5 right-5 bg-blue-600 text-white py-2 px-5 rounded-lg shadow-xl z-50 transition-transform duration-300 translate-y-20">
-        <i class="fas fa-pencil-alt mr-2"></i>
-        Modo de Edição Ativado. Clique em um evento da API para alterar a faixa.
+    <div id="edit-mode-log" class="hidden fixed bottom-20 right-5 bg-gray-200 text-gray-800 p-3 rounded-lg shadow-xl z-50 transition-transform duration-300 translate-y-24 max-w-xs w-full">
+        <p class="text-sm font-semibold mb-2 flex justify-between items-center">
+            <span>Última Alteração</span>
+            <button id="undo-button" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-md text-xs transition-colors" disabled>
+                <i class="fas fa-undo mr-1"></i>Desfazer
+            </button>
+        </p>
+        <div id="edit-log-content" class="text-xs font-mono bg-gray-100 p-2 rounded-md">Nenhuma alteração registrada.</div>
+    </div>
+
+
+    <div id="edit-mode-toast" class="hidden fixed bottom-5 right-5 bg-blue-600 text-white py-2 px-5 rounded-lg shadow-xl z-50 transition-transform duration-300 translate-y-20 flex items-center gap-2">
+        <i class="fas fa-pencil-alt"></i>
+        Modo de Edição Ativado.
     </div>
 
     <div id="sash-edit-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-40">
@@ -141,488 +186,728 @@
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <div id="date-edit-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-40">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+            <h3 class="text-lg font-bold mb-4">Alterar Data do Jogo</h3>
+            <p id="event-name-in-modal" class="text-sm text-gray-600 mb-3"></p>
+            <label for="date-input" class="block text-sm font-medium text-gray-700 mb-2">Selecione a nova data:</label>
+            <input type="date" id="date-input" class="w-full p-2 border border-gray-300 rounded-md shadow-sm">
+            <div class="mt-6 flex justify-end space-x-3">
+                <button id="cancel-date-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">Cancelar</button>
+                <button id="save-date-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Salvar</button>
+            </div>
+        </div>
+    </div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyB6zquSsTLCnJ_1WWQm8kb-HkpipU8PrTA",
-            authDomain: "marketing-esportivo.firebaseapp.com",
-            projectId: "marketing-esportivo",
-            storageBucket: "marketing-esportivo.appspot.com",
-            messagingSenderId: "53646634690",
-            appId: "1:53646634690:web:3e45f49d82d64601c0555b"
+
+    <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    // ATUALIZAÇÃO: Importando funções de autenticação
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyB6zquSsTLCnJ_1WWQm8kb-HkpipU8PrTA",
+        authDomain: "marketing-esportivo.firebaseapp.com",
+        projectId: "marketing-esportivo",
+        storageBucket: "marketing-esportivo.appspot.com",
+        messagingSenderId: "53646634690",
+        appId: "1:53646634690:web:3e45f49d82d64601c0555b"
+    };
+
+    const API_KEY = '373862';
+    const BASE_URL = `https://www.thesportsdb.com/api/v1/json/${API_KEY}`;
+
+    let db;
+    let allEvents = new Map();
+    let isEditModeEnabled = false;
+    let editHistory = [];
+
+    const IMPORTANT_LEAGUES = { '4351': 'https://www.thesportsdb.com/images/media/league/badge/ny47lx1701964009.png', '4331': 'https://upload.wikimedia.org/wikipedia/pt/f/f9/Bundesliga_logo_%282017%29.png', '4335': 'https://www.thesportsdb.com/images/media/league/badge/7onmyv1534768460.png', '4328': 'https://footballgroundguide.com/app/uploads/2023/12/premiereleague-logo-768x768.png', '4480': 'https://ssl.gstatic.com/onebox/media/sports/logos/YijZbE4UZ_09JrTvBU91fg_64x64.png', '4501': 'https://s3.static.brasilescola.uol.com.br/be/2022/03/taca-da-libertadores.jpg', '4724': 'https://upload.wikimedia.org/wikipedia/pt/thumb/e/e4/Conmebol_Sudamericana_logo.png/428px-Conmebol_Sudamericana_logo.png', '4443': 'https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcQfDSkxta9cASfWZmVMXvVf5L1x-CJTGLGmjYt5GyBC7V01VVoq' };
+    const TEAM_LEVELS = { '134465': 5, '134287': 5, '133729': 5, '133739': 5, '133613': 5, '133614': 5, '133668': 5, '133693': 5, '133692': 5, '133689': 5, '133702': 5, '133604': 5, '133612': 5, '133610': 5, '133732': 5, '133667': 5, '134299': 4, '134291': 4, '134284': 4, '134296': 4, '134288': 4, '134281': 4, '133616': 4, '134777': 4, '133671': 4, '133700': 4, '133699': 4, '133695': 4, '133734': 4, '133698': 4, '133696': 4, '133601': 4, '133619': 4, '133690': 4, '134282': 3, '134294': 3, '134286': 3, '134293': 3, '134285': 3, '136186': 3, '133736': 3, '133731': 3, '133735': 3, '133728': 3, '133737': 3, '133694': 3, '133701': 3, '134280': 2, '134744': 2, '134736': 2, '135887': 2, '133636': 2 };
+    const MAIN_LEAGUE_IDS = ['4351', '4331', '4335', '4328', '4480', '4501', '4443', '4724'];
+    const FOOTBALL_TEAM_IDS = Object.keys(TEAM_LEVELS);
+    const UFC_LEAGUE_ID = '4443';
+    const SUDAMERICANA_LEAGUE_ID = '4724';
+    const LIBERTADORES_LEAGUE_ID = '4501';
+    const CHAMPIONS_LEAGUE_ID = '4480';
+    const GALO_ID = '134299';
+    const STATUS_COLORS = { red: '#ef4444', yellow: '#f59e0b', green: '#22c55e' };
+
+    function saveDataToCache(eventsMap) {
+        const cacheData = {
+            timestamp: new Date().toISOString(),
+            events: JSON.stringify(Array.from(eventsMap.entries()))
+        };
+        localStorage.setItem('sportsDashboardCache', JSON.stringify(cacheData));
+    }
+
+    function loadDataFromCache() {
+    const cachedData = localStorage.getItem('sportsDashboardCache');
+    if (!cachedData) return null;
+    
+    const { timestamp, events } = JSON.parse(cachedData);
+    const cacheDate = new Date(timestamp);
+    const now = new Date();
+    const todayNoon = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
+    const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+    let lastRefreshPoint = (now >= todayNoon) ? todayNoon : todayMidnight;
+
+    if (cacheDate >= lastRefreshPoint) {
+        // O cache ainda é válido, retorna os dados.
+        return new Map(JSON.parse(events));
+    }
+
+    // Se o cache estiver desatualizado, executa a limpeza completa
+    console.log("Cache desatualizado. Limpando todo o armazenamento do navegador...");
+    
+    // 1. Limpa TODO o Local Storage
+    localStorage.clear();
+    console.log("Local Storage limpo.");
+
+    // 2. Limpa o Session Storage
+    sessionStorage.clear();
+    console.log("Session Storage limpo.");
+
+    // 3. Limpa os Cookies do domínio
+    clearAllCookies();
+    
+    return null; // Força a busca de novos dados
+}
+
+    const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+    // --- NOVA FUNÇÃO PARA LIMPAR COOKIES ---
+    function clearAllCookies() {
+        // Esta função só pode limpar cookies do mesmo domínio (no seu caso, 127.0.0.1)
+        const cookies = document.cookie.split(";");
+
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i];
+            const eqPos = cookie.indexOf("=");
+            const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+            document.cookie = name.trim() + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+        }
+        console.log("Cookies do domínio atual foram limpos.");
+    }
+
+    function updateProgress(percentage) {
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        if (progressBar && progressText) {
+            const p = Math.min(100, Math.max(0, percentage));
+            progressBar.style.width = `${p}%`;
+            progressText.textContent = `${Math.round(p)}%`;
+        }
+    }
+
+    async function fetchSheetData() {
+        const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3rhQxYb78wgVMUssOAdfdaAA8x8jULNsw3PHhhg1vrjPYdfzEKR18DL-o9Z1KJEfyOs4zekgBkQb6/pub?gid=0&single=true&output=csv';
+        try {
+            const response = await fetch(sheetUrl);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const csvText = await response.text();
+            csvText.split(/\r?\n/).slice(1).forEach(row => {
+                const columns = row.split(',').map(c => c.trim());
+                if (columns.length < 5 || !columns[0]) return;
+                const [id, name, logo, date, sashType] = columns;
+                const dateParts = date.split('/');
+                if (dateParts.length !== 3) return;
+                const formattedDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+                processAndAddEvent({
+                    idEvent: `sheet_${id}`, strLeague: name, logoUrl: logo, dateEvent: formattedDate,
+                    matchType: sashType ? sashType.trim().toUpperCase().replace(/\s+/g, '_') : undefined,
+                    isSheetEvent: true, strTime: '', isHidden: false
+                });
+            });
+        } catch (error) {
+            console.error('Erro ao buscar ou processar dados da planilha:', error);
+        }
+    }
+
+    function processAndAddEvent(event) {
+        if (allEvents.has(event.idEvent)) return;
+        event.effectiveDate = event.customDate || event.dateEvent;
+        if (event.isSheetEvent) {
+            event.importanceScore = 10;
+        } else {
+            const homeLevel = TEAM_LEVELS[event.idHomeTeam] || 1;
+            const awayLevel = TEAM_LEVELS[event.idAwayTeam] || 1;
+            event.importanceScore = homeLevel + awayLevel;
+            if (!event.matchType) {
+                const leagueNameLower = (event.strLeague || '').toLowerCase();
+                const roundNameLower = (event.intRound || '').toString().toLowerCase();
+                if (['final', 'cup final', 'world cup', 'decisão'].some(k => leagueNameLower.includes(k) || roundNameLower.includes(k))) event.matchType = 'FINAL';
+                else if (['semi-final', 'semifinal'].some(k => leagueNameLower.includes(k) || roundNameLower.includes(k))) event.matchType = 'SEMI_FINAL';
+                else if (['quarter-final', 'quarterfinal', 'quartas de final'].some(k => leagueNameLower.includes(k) || roundNameLower.includes(k))) event.matchType = 'QUARTAS_FINAL';
+            }
+        }
+        allEvents.set(event.idEvent, event);
+    }
+
+    function getStatusTrafficLights(event) {
+        const statuses = event.statuses || { mkt: 'red', crm: 'red', tra: 'red' };
+        return ['mkt', 'crm', 'tra'].map(area => `
+            <div class="traffic-light"
+                 style="background-color: ${STATUS_COLORS[statuses[area]]};"
+                 title="${area.toUpperCase()}"
+                 data-area="${area}" data-event-id="${event.idEvent}">
+                 ${area.toUpperCase()}
+            </div>
+        `).join('');
+    }
+
+    function createTopEventCard(league, event) {
+        let sashHTML = '', visibilityIconHTML = '';
+        if (event.matchType) {
+            let sashText = '', sashColorClass = '';
+            switch (event.matchType) {
+                case 'FINAL': sashText = 'Final'; sashColorClass = 'bg-yellow-500'; break;
+                case 'SEMI_FINAL': sashText = 'Semifinal'; sashColorClass = 'bg-gray-400'; break;
+                case 'QUARTAS_FINAL': sashText = 'Quartas'; sashColorClass = 'bg-yellow-700'; break;
+                case 'GALO': sashText = 'GALO'; sashColorClass = 'bg-red-600'; break;
+                case 'INICIO': sashText = 'Início'; sashColorClass = 'bg-blue-500'; break;
+            }
+            if (sashText) sashHTML = `<div class="sash ${sashColorClass}">${sashText}</div>`;
+        }
+        const isEditable = !event.isSheetEvent;
+        if (isEditModeEnabled && isEditable) {
+            const iconClass = event.isHidden ? 'fa-plus' : 'fa-minus';
+            const title = event.isHidden ? 'Mostrar evento' : 'Esconder evento';
+            visibilityIconHTML = `<div class="visibility-toggle" title="${title}" data-event-id="${event.idEvent}"><i class="fas ${iconClass}"></i></div>`;
+        }
+        const editableAttribute = isEditable ? `data-editable="true"` : '';
+        let cardClasses = 'bg-white p-2 rounded-lg shadow-sm flex-shrink-0 w-28 flex flex-col items-center justify-center event-card relative overflow-hidden transition-opacity duration-300';
+        if (isEditable && isEditModeEnabled) cardClasses += ' cursor-pointer hover:ring-2 hover:ring-blue-500';
+        if (isEditModeEnabled && event.isHidden) cardClasses += ' opacity-50';
+        return `
+            <div class="${cardClasses}" ${editableAttribute} data-event-id="${event.idEvent}">
+                ${visibilityIconHTML}
+                ${sashHTML}
+                <img src="${league.logo}" alt="${league.name}" class="h-10 object-contain" title="${league.name}">
+                <p class="text-center text-xs font-bold mt-2">${formatDateForCard(event.effectiveDate)}</p>
+                <div class="mt-2 flex justify-center items-center gap-2 px-1">
+                    ${getStatusTrafficLights(event)}
+                </div>
+            </div>
+        `;
+    }
+
+    function createTopMatchCard(event) {
+        let sashHTML = '';
+        if (event.matchType) {
+            let sashText = '', sashColorClass = '';
+            switch (event.matchType) {
+                case 'FINAL': sashText = 'Final'; sashColorClass = 'bg-yellow-500'; break;
+                case 'SEMI_FINAL': sashText = 'Semifinal'; sashColorClass = 'bg-gray-400'; break;
+                case 'QUARTAS_FINAL': sashText = 'Quartas'; sashColorClass = 'bg-yellow-700'; break;
+                case 'INICIO': sashText = 'Início'; sashColorClass = 'bg-blue-500'; break;
+            }
+            if (sashText) sashHTML = `<div class="sash ${sashColorClass}">${sashText}</div>`;
+        } else if (event.idHomeTeam === GALO_ID || event.idAwayTeam === GALO_ID) {
+            sashHTML = `<div class="sash bg-red-600">GALO</div>`;
+        }
+        let cardContentHTML = '';
+        if (event.idLeague == UFC_LEAGUE_ID) {
+            let ufcEventName = (event.strEvent || '').includes(':') ? event.strEvent.split(':')[1].trim() : event.strEvent;
+            cardContentHTML = `<div class="text-center">
+                <img src="https://www.thesportsdb.com/images/media/league/badge/026ms21549488383.png" alt="UFC" class="h-8 mx-auto">
+                <p class="text-xs font-bold mt-1.5 truncate" title="${event.strEvent}">${ufcEventName}</p>
+                <div class="flex items-baseline justify-center space-x-2 mt-1">
+                    <p class="text-xs font-bold">${formatDateForCard(event.effectiveDate)}</p>
+                    <p class="text-xs text-gray-600">${event.strTime.substring(0,5)}</p>
+                </div>
+            </div>`;
+        } else {
+             cardContentHTML = `<div>
+                <div class="flex justify-between items-center text-xs font-semibold text-gray-500 px-1">
+                    <span>${event.strLeague}</span>
+                </div>
+                <div class="flex items-center justify-around my-1.5">
+                    <img src="${event.strHomeTeamBadge}" alt="${event.strHomeTeam}" class="h-8 w-8 object-contain">
+                    <span class="font-bold text-gray-400 text-sm">vs</span>
+                    <img src="${event.strAwayTeamBadge}" alt="${event.strAwayTeam}" class="h-8 w-8 object-contain">
+                </div>
+                <div class="flex items-baseline justify-center space-x-2">
+                    <p class="text-sm font-bold">${formatDateForCard(event.effectiveDate)}</p>
+                    <p class="text-xs text-gray-600">${event.strTime.substring(0,5)}</p>
+                </div>
+            </div>`;
+        }
+        let cardClasses = "bg-white p-1.5 rounded-lg shadow-sm flex-shrink-0 w-44 flex flex-col justify-between relative overflow-hidden event-card-match";
+        if (isEditModeEnabled) cardClasses += " hover:ring-2 hover:ring-indigo-500";
+        return `<div class="${cardClasses}" data-event-id="${event.idEvent}">${sashHTML}${cardContentHTML}<div class="mt-1.5 flex justify-center items-center gap-2 px-1">${getStatusTrafficLights(event)}</div></div>`;
+    }
+
+    function createWeekGameItem(event) {
+    let itemHTML = '';
+
+    // Lógica para Futebol
+    if (event.idHomeTeam && event.strAwayTeam) {
+        const homeTeamShort = (event.strHomeTeam || '').substring(0, 4);
+        const awayTeamShort = (event.strAwayTeam || '').substring(0, 4);
+        // ADICIONAMOS LARGURA FIXA (w-12) E ALINHAMENTO AOS NOMES DOS TIMES
+        itemHTML = `
+            <img src="${event.strHomeTeamBadge}" alt="${homeTeamShort}" class="w-4 h-4 object-contain">
+            <span class="w-12 text-left font-medium text-gray-700 pl-2">${homeTeamShort}</span>
+            <span class="mx-1 text-gray-400 text-xs">vs</span>
+            <span class="w-12 text-right font-medium text-gray-700 pr-2">${awayTeamShort}</span>
+            <img src="${event.strAwayTeamBadge}" alt="${awayTeamShort}" class="w-4 h-4 object-contain">
+        `;
+    } 
+    // Lógica para UFC e outros eventos (permanece a mesma)
+    else {
+        let eventName = (event.strEvent || '');
+        if (event.idLeague == UFC_LEAGUE_ID) {
+            eventName = eventName.includes(':') ? eventName.split(':')[1].trim() : eventName;
+            itemHTML = `<i class="fas fa-hand-fist text-red-500 w-4 text-center mr-2"></i>`;
+        }
+        itemHTML += `<span class="font-medium text-gray-700">${eventName}</span>`;
+    }
+
+    // Monta a linha completa do evento
+    return `
+        <div class="flex items-center justify-center text-xs" title="${event.strEvent || ''}">
+            ${itemHTML}
+        </div>
+    `;
+}
+
+    function formatDateForCard(dateStr) {
+        if (!dateStr) return 'Data indet.';
+        const date = new Date(dateStr + 'T00:00:00');
+        return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '');
+    }
+
+    function getSortedEvents() {
+        return Array.from(allEvents.values()).sort((a, b) => new Date(a.effectiveDate) - new Date(b.effectiveDate));
+    }
+
+    function rerenderAllSections() {
+        const sortedEvents = getSortedEvents();
+        renderTopEvents(sortedEvents);
+        renderTopMatches(sortedEvents);
+        renderWeekGames(sortedEvents);
+        attachAllListeners();
+    }
+
+    function renderPage() {
+        rerenderAllSections();
+        document.getElementById('page-loader').style.display = 'none';
+        document.getElementById('main-content').classList.remove('hidden');
+        allEvents.forEach(event => listenToEventStatus(event.idEvent));
+    }
+
+    function renderTopEvents(events) {
+        const container = document.getElementById('top-events-container');
+        container.innerHTML = '';
+        let sourceEvents = events;
+        if (!isEditModeEnabled) {
+            sourceEvents = events.filter(event => !event.isHidden);
+        }
+        const eventsWithVariety = [];
+        const processedLeagues = new Set();
+        sourceEvents.forEach(event => {
+            if (event.isSheetEvent) {
+                eventsWithVariety.push(event);
+            } else if (IMPORTANT_LEAGUES.hasOwnProperty(event.idLeague) && !processedLeagues.has(event.idLeague)) {
+                eventsWithVariety.push(event);
+                processedLeagues.add(event.idLeague);
+            }
+        });
+        const eventsToRender = eventsWithVariety.slice(0, 20);
+        if (eventsToRender.length === 0) {
+            container.innerHTML = '<p class="text-gray-500">Nenhum evento principal encontrado.</p>';
+        } else {
+            eventsToRender.forEach(event => {
+                let leagueInfo = event.isSheetEvent
+                    ? { id: event.idEvent, name: event.strLeague, logo: event.logoUrl }
+                    : { id: event.idLeague, name: event.strLeague, logo: IMPORTANT_LEAGUES[event.idLeague] };
+                container.innerHTML += createTopEventCard(leagueInfo, event);
+            });
+        }
+    }
+
+    function renderTopMatches(events) {
+        const container = document.getElementById('top-matches-container');
+        const TIER_1_THRESHOLD = 9, TIER_2_THRESHOLD = 7;
+        const matchesToDisplayMap = new Map();
+        events.filter(event => event.matchType && !event.isSheetEvent).forEach(event => matchesToDisplayMap.set(event.idEvent, event));
+        let starMatches = [];
+        const tier1Matches = events.filter(event => !event.isSheetEvent && (event.importanceScore || 0) >= TIER_1_THRESHOLD);
+        starMatches = (tier1Matches.length > 0) ? tier1Matches : events.filter(event => !event.isSheetEvent && (event.importanceScore || 0) >= TIER_2_THRESHOLD);
+        starMatches.forEach(event => { if (!matchesToDisplayMap.has(event.idEvent)) matchesToDisplayMap.set(event.idEvent, event); });
+        const sortedMatches = Array.from(matchesToDisplayMap.values()).sort((a, b) => new Date(a.effectiveDate) - new Date(b.effectiveDate));
+        container.innerHTML = sortedMatches.length > 0 ? sortedMatches.map(createTopMatchCard).join('') : '<p class="text-gray-500">Nenhum jogo de destaque encontrado.</p>';
+    }
+
+    function getGamePriorityScore(game) {
+        let score = game.importanceScore || 0;
+        if (game.matchType === 'FINAL') score += 50;
+        if (game.matchType === 'SEMI_FINAL') score += 40;
+        if (game.matchType === 'QUARTAS_FINAL') score += 30;
+        if (game.idLeague == LIBERTADORES_LEAGUE_ID) score += 25;
+        if (game.idLeague == CHAMPIONS_LEAGUE_ID) score += 25;
+        if (game.idLeague == SUDAMERICANA_LEAGUE_ID) score += 25;
+        if (game.idLeague == UFC_LEAGUE_ID) score += 15;
+        if (game.matchType === 'INICIO') score += 5;
+        return score;
+    }
+
+    function renderWeekGames(events) {
+    const container = document.getElementById('week-games-container');
+    container.innerHTML = '';
+    const weekDates = Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() + i); return d; });
+
+    weekDates.forEach(date => {
+        const dateString = date.toISOString().split('T')[0];
+        const gamesForDay = events.filter(e => e.effectiveDate === dateString && !e.isSheetEvent);
+        const sortedGames = gamesForDay.sort((a, b) => getGamePriorityScore(b) - getGamePriorityScore(a));
+        
+        let gamesHTML = sortedGames.map(createWeekGameItem).join('');
+
+        if (sortedGames.length === 0) {
+            gamesHTML = '<p class="text-xs text-gray-400 mt-2">Sem jogos de destaque.</p>';
+        }
+        
+        // Removemos os divs de fundo, deixando o conteúdo direto na página
+        container.innerHTML += `
+            <div>
+                <h3 class="bg-gray-800 text-white font-bold text-center text-sm mb-2 rounded py-1">${date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '')}</h3>
+                <div class="space-y-2">${gamesHTML}</div>
+            </div>
+        `;
+    });
+}
+
+    function attachAllListeners() {
+        document.querySelectorAll('.traffic-light').forEach(button => {
+            if (button.getAttribute('data-listener-attached')) return;
+            button.addEventListener('click', handleTrafficLightClick);
+            button.setAttribute('data-listener-attached', 'true');
+        });
+    }
+
+    async function fetchAllData() {
+        updateProgress(0);
+        document.getElementById('page-loader').style.display = 'flex';
+        document.getElementById('main-content').classList.add('hidden');
+        const totalApiSources = MAIN_LEAGUE_IDS.length + FOOTBALL_TEAM_IDS.length;
+        let sourcesFetched = 0;
+        const updateApiProgress = () => updateProgress(++sourcesFetched / totalApiSources * 90);
+        const apiPromises = [];
+        MAIN_LEAGUE_IDS.forEach(id => apiPromises.push(fetch(`${BASE_URL}/eventsnextleague.php?id=${id}`).then(res => res.ok ? res.json() : Promise.reject()).then(result => result.events?.forEach(processAndAddEvent)).catch(console.error).finally(updateApiProgress)));
+        FOOTBALL_TEAM_IDS.forEach(id => apiPromises.push(fetch(`${BASE_URL}/eventsnext.php?id=${id}`).then(res => res.ok ? res.json() : Promise.reject()).then(result => result.events?.forEach(processAndAddEvent)).catch(console.error).finally(updateApiProgress)));
+        await Promise.all(apiPromises);
+        await fetchSheetData();
+        updateProgress(92);
+        const statusPromises = Array.from(allEvents.keys()).map(eventId => getDoc(doc(db, "event_statuses", eventId)).then(docSnapshot => {
+            const event = allEvents.get(eventId);
+            if (event) {
+                const savedStatuses = docSnapshot.data() || {};
+                event.statuses = { mkt: 'red', crm: 'red', tra: 'red', ...savedStatuses };
+                event.matchType = savedStatuses.matchType;
+                event.customDate = savedStatuses.customDate;
+                event.effectiveDate = event.customDate || event.dateEvent;
+                event.isHidden = savedStatuses.isHidden || false;
+            }
+        }));
+        await Promise.all(statusPromises);
+        updateProgress(98);
+        saveDataToCache(allEvents);
+        updateProgress(100);
+        await sleep(300);
+        renderPage();
+    }
+
+    function listenToEventStatus(eventId) {
+        onSnapshot(doc(db, "event_statuses", eventId), (docSnapshot) => {
+            const event = allEvents.get(eventId);
+            if (event) {
+                const savedStatuses = docSnapshot.data() || {};
+                const hadSashChanged = event.matchType !== savedStatuses.matchType;
+                const hadVisibilityChanged = event.isHidden !== savedStatuses.isHidden;
+                const hadDateChanged = event.customDate !== savedStatuses.customDate;
+                event.statuses = { mkt: 'red', crm: 'red', tra: 'red', ...savedStatuses };
+                event.matchType = savedStatuses.matchType;
+                event.customDate = savedStatuses.customDate;
+                event.effectiveDate = event.customDate || event.dateEvent;
+                event.isHidden = savedStatuses.isHidden || false;
+                document.querySelectorAll(`.traffic-light[data-event-id="${eventId}"]`).forEach(light => {
+                    const area = light.dataset.area;
+                    if (area && event.statuses[area]) light.style.backgroundColor = STATUS_COLORS[event.statuses[area]];
+                });
+                if(hadSashChanged || hadVisibilityChanged || hadDateChanged) {
+                   rerenderAllSections();
+                }
+                saveDataToCache(allEvents);
+            }
+        });
+    }
+
+    async function handleTrafficLightClick(e) {
+    e.stopPropagation();
+    const { eventId, area } = e.currentTarget.dataset;
+    if (!eventId || !area) return;
+
+    const event = allEvents.get(eventId);
+    const statusCycle = ['red', 'yellow', 'green'];
+    const currentStatus = (event?.statuses && event.statuses[area]) || 'red';
+    const nextStatus = statusCycle[(statusCycle.indexOf(currentStatus) + 1) % statusCycle.length];
+
+    try {
+        // Tenta salvar a alteração no Firebase
+        await setDoc(doc(db, "event_statuses", eventId), { [area]: nextStatus }, { merge: true });
+        console.log(`Status de ${area} para evento ${eventId} atualizado para ${nextStatus} com sucesso.`);
+    } catch (error) {
+        // Se der erro, exibe um alerta e loga o erro no console
+        console.error("FALHA AO ATUALIZAR O FAROL:", error);
+        alert(`ERRO: Não foi possível salvar a alteração do farol.\n\nVerifique sua conexão com a internet ou as regras de segurança do Firebase.\n\nDetalhe do erro: ${error.message}`);
+    }
+}
+
+    function updateEditLogUI() {
+        const logContent = document.getElementById('edit-log-content');
+        const undoButton = document.getElementById('undo-button');
+        if (editHistory.length > 0) {
+            const lastAction = editHistory[editHistory.length - 1];
+            logContent.textContent = lastAction.description;
+            undoButton.disabled = false;
+        } else {
+            logContent.textContent = "Nenhuma alteração recente.";
+            undoButton.disabled = true;
+        }
+    }
+
+    function toggleEditModeUI(isActive) {
+        const toast = document.getElementById('edit-mode-toast');
+        const log = document.getElementById('edit-mode-log');
+
+        if (isActive) {
+            toast.classList.remove('hidden', 'translate-y-20');
+            log.classList.remove('hidden', 'translate-y-24');
+            updateEditLogUI();
+        } else {
+            toast.classList.add('translate-y-20');
+            log.classList.add('translate-y-24');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+                log.classList.add('hidden');
+            }, 300);
+        }
+    }
+
+    function openSashModal(eventId) {
+        const event = allEvents.get(eventId);
+        if (!event) return;
+        const modal = document.getElementById('sash-edit-modal');
+        document.getElementById('sash-select').value = event.matchType || '';
+        modal.dataset.editingEventId = eventId;
+        modal.classList.remove('hidden');
+    }
+
+    function openDateModal(eventId) {
+        const event = allEvents.get(eventId);
+        if (!event) return;
+        const modal = document.getElementById('date-edit-modal');
+        document.getElementById('event-name-in-modal').textContent = event.strEvent || `${event.strHomeTeam} vs ${event.strAwayTeam}`;
+        document.getElementById('date-input').value = event.effectiveDate;
+        modal.dataset.editingEventId = eventId;
+        modal.classList.remove('hidden');
+    }
+
+    function logChange(eventId, field, oldValue, newValue, description) {
+        editHistory.push({ eventId, field, oldValue, newValue, description });
+        updateEditLogUI();
+    }
+
+    async function saveSashChange() {
+        const modal = document.getElementById('sash-edit-modal');
+        const eventId = modal.dataset.editingEventId;
+        const newSashValue = document.getElementById('sash-select').value || null;
+        if (!eventId) return;
+
+        const event = allEvents.get(eventId);
+        const oldValue = event.matchType || null;
+
+        if (oldValue !== newSashValue) {
+            logChange(eventId, 'matchType', oldValue, newSashValue, `Faixa de "${event.strEvent.substring(0, 20)}..." alterada para ${newSashValue || 'Nenhuma'}.`);
+            await setDoc(doc(db, "event_statuses", eventId), { matchType: newSashValue }, { merge: true });
+        }
+        modal.classList.add('hidden');
+    }
+
+    async function saveDateChange() {
+        const modal = document.getElementById('date-edit-modal');
+        const eventId = modal.dataset.editingEventId;
+        const newDateValue = document.getElementById('date-input').value;
+        if (!eventId || !newDateValue) return;
+
+        const event = allEvents.get(eventId);
+        const oldValue = event.customDate || event.dateEvent;
+
+        if (oldValue !== newDateValue) {
+            logChange(eventId, 'customDate', oldValue, newDateValue, `Data de "${event.strEvent.substring(0, 20)}..." alterada para ${formatDateForCard(newDateValue)}.`);
+            await setDoc(doc(db, "event_statuses", eventId), { customDate: newDateValue }, { merge: true });
+        }
+        modal.classList.add('hidden');
+    }
+
+    async function handleUndo() {
+        const lastAction = editHistory.pop();
+        if (!lastAction) return;
+
+        const { eventId, field, oldValue } = lastAction;
+        await setDoc(doc(db, "event_statuses", eventId), { [field]: oldValue }, { merge: true });
+        
+        updateEditLogUI();
+    }
+
+    async function handleVisibilityToggle(eventId) {
+        const event = allEvents.get(eventId);
+        if (!event) return;
+        const newVisibility = !event.isHidden;
+        await setDoc(doc(db, "event_statuses", eventId), { isHidden: newVisibility }, { merge: true });
+    }
+
+    async function initialize() {
+        // ATUALIZAÇÃO: Aplicando a autenticação anônima
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        await signInAnonymously(auth);
+        console.log("Usuário anônimo autenticado:", auth.currentUser.uid);
+        
+        db = getFirestore(app);
+
+        // --- CÓDIGO FINAL PARA O HEADER (CONTROLE PELO MOUSE) ---
+        const header = document.querySelector('header');
+        const mainContent = document.getElementById('main-container');
+        const headerTriggerZone = document.getElementById('header-trigger-zone');
+        let hideHeaderTimeout = null;
+        
+        mainContent.style.transition = 'padding-top 0.3s ease-in-out';
+
+        const adjustMainContentPadding = () => {
+            const headerHeight = header.offsetHeight;
+            if (header.classList.contains('header-hidden')) {
+                mainContent.style.paddingTop = '0px';
+            } else {
+                mainContent.style.paddingTop = `${headerHeight}px`;
+            }
+        };
+        
+        adjustMainContentPadding();
+
+        setTimeout(() => {
+            header.classList.add('header-hidden');
+            adjustMainContentPadding();
+        }, 500);
+
+        headerTriggerZone.addEventListener('mouseenter', () => {
+            clearTimeout(hideHeaderTimeout);
+            header.classList.remove('header-hidden');
+            adjustMainContentPadding();
+        });
+
+        header.addEventListener('mouseleave', () => {
+            hideHeaderTimeout = setTimeout(() => {
+                header.classList.add('header-hidden');
+                adjustMainContentPadding();
+            }, 500);
+        });
+        // --- FIM DO CÓDIGO ---
+
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                isEditModeEnabled = !isEditModeEnabled;
+                toggleEditModeUI(isEditModeEnabled);
+                rerenderAllSections();
+            }
+        });
+
+        document.getElementById('top-events-container').addEventListener('click', (e) => {
+            if (!isEditModeEnabled) return;
+            const visibilityToggle = e.target.closest('.visibility-toggle');
+            if (visibilityToggle) {
+                e.stopPropagation();
+                handleVisibilityToggle(visibilityToggle.dataset.eventId);
+                return;
+            }
+            const editableCard = e.target.closest('.event-card[data-editable="true"]');
+            if (editableCard) {
+                openSashModal(editableCard.dataset.eventId);
+            }
+        });
+
+        document.getElementById('top-matches-container').addEventListener('click', (e) => {
+            if (!isEditModeEnabled) return;
+            const matchCard = e.target.closest('.event-card-match');
+            if (matchCard) {
+                const event = allEvents.get(matchCard.dataset.eventId);
+                if (event && !event.isSheetEvent) {
+                    openDateModal(matchCard.dataset.eventId);
+                }
+            }
+        });
+
+        document.getElementById('save-sash-btn').addEventListener('click', saveSashChange);
+        document.getElementById('cancel-sash-btn').addEventListener('click', () => document.getElementById('sash-edit-modal').classList.add('hidden'));
+
+        document.getElementById('save-date-btn').addEventListener('click', saveDateChange);
+        document.getElementById('cancel-date-btn').addEventListener('click', () => document.getElementById('date-edit-modal').classList.add('hidden'));
+        
+        document.getElementById('undo-button').addEventListener('click', handleUndo);
+
+        const cachedEvents = loadDataFromCache();
+        if (cachedEvents?.size > 0) {
+            allEvents = cachedEvents;
+            allEvents.forEach(e => e.effectiveDate = e.customDate || e.dateEvent);
+            renderPage();
+        } else {
+            fetchAllData();
+        }
+
+        // --- CÓDIGO PARA O CARROSSEL ARRASTÁVEL ---
+        const addDragScroll = (element) => {
+            if (!element) return;
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+
+            element.addEventListener('mousedown', (e) => {
+                isDown = true;
+                element.classList.add('dragging');
+                startX = e.pageX - element.offsetLeft;
+                scrollLeft = element.scrollLeft;
+            });
+
+            element.addEventListener('mouseleave', () => {
+                isDown = false;
+                element.classList.remove('dragging');
+            });
+
+            element.addEventListener('mouseup', () => {
+                isDown = false;
+                element.classList.remove('dragging');
+            });
+
+            element.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - element.offsetLeft;
+                const walk = (x - startX) * 2; // Multiplicador para dar mais sensibilidade
+                element.scrollLeft = scrollLeft - walk;
+            });
         };
 
-        const API_KEY = '373862';
-        const BASE_URL = `https://www.thesportsdb.com/api/v1/json/${API_KEY}`;
+        // Aplica a funcionalidade aos dois carrosséis
+        addDragScroll(document.getElementById('top-events-container'));
+        addDragScroll(document.getElementById('top-matches-container'));
+        // --- FIM DO CÓDIGO ---
+    }
 
-        let db;
-        let allEvents = new Map();
-        let isEditModeEnabled = false;
-
-        const IMPORTANT_LEAGUES = { '4351': 'https://www.thesportsdb.com/images/media/league/badge/ny47lx1701964009.png', '4331': 'https://upload.wikimedia.org/wikipedia/pt/f/f9/Bundesliga_logo_%282017%29.png', '4335': 'https://www.thesportsdb.com/images/media/league/badge/7onmyv1534768460.png', '4328': 'https://footballgroundguide.com/app/uploads/2023/12/premiereleague-logo-768x768.png', '4480': 'https://ssl.gstatic.com/onebox/media/sports/logos/YijZbE4UZ_09JrTvBU91fg_64x64.png', '4501': 'https://s3.static.brasilescola.uol.com.br/be/2022/03/taca-da-libertadores.jpg', '4724': 'https://upload.wikimedia.org/wikipedia/pt/thumb/e/e4/Conmebol_Sudamericana_logo.png/428px-Conmebol_Sudamericana_logo.png', '4443': 'https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcQfDSkxta9cASfWZmVMXvVf5L1x-CJTGLGmjYt5GyBC7V01VVoq' };
-        const TEAM_LEVELS = { '134465': 5, '134287': 5, '133729': 5, '133739': 5, '133613': 5, '133614': 5, '133668': 5, '133693': 5, '133692': 5, '133689': 5, '133702': 5, '133604': 5, '133612': 5, '133610': 5, '133732': 5, '133667': 5, '134299': 4, '134291': 4, '134284': 4, '134296': 4, '134288': 4, '134281': 4, '133616': 4, '134777': 4, '133671': 4, '133700': 4, '133699': 4, '133695': 4, '133734': 4, '133698': 4, '133696': 4, '133601': 4, '133619': 4, '133690': 4, '134282': 3, '134294': 3, '134286': 3, '134293': 3, '134285': 3, '136186': 3, '133736': 3, '133731': 3, '133735': 3, '133728': 3, '133737': 3, '133694': 3, '133701': 3, '134280': 2, '134744': 2, '134736': 2, '135887': 2, '133636': 2 };
-        const MAIN_LEAGUE_IDS = ['4351', '4331', '4335', '4328', '4480', '4501', '4443', '4724'];
-        const FOOTBALL_TEAM_IDS = Object.keys(TEAM_LEVELS);
-        const UFC_LEAGUE_ID = '4443';
-        const SUDAMERICANA_LEAGUE_ID = '4724';
-        const LIBERTADORES_LEAGUE_ID = '4501';
-        const CHAMPIONS_LEAGUE_ID = '4480';
-        const GALO_ID = '134299';
-        const STATUS_COLORS = { red: '#ef4444', yellow: '#f59e0b', green: '#22c55e' };
-
-        function saveDataToCache(eventsMap) {
-            const cacheData = {
-                timestamp: new Date().toISOString(),
-                events: JSON.stringify(Array.from(eventsMap.entries()))
-            };
-            localStorage.setItem('sportsDashboardCache', JSON.stringify(cacheData));
-        }
-
-        function loadDataFromCache() {
-            const cachedData = localStorage.getItem('sportsDashboardCache');
-            if (!cachedData) return null;
-            
-            const { timestamp, events } = JSON.parse(cachedData);
-            const cacheDate = new Date(timestamp);
-            const now = new Date();
-            const todayNoon = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
-            const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-            let lastRefreshPoint = (now >= todayNoon) ? todayNoon : todayMidnight;
-
-            if (cacheDate >= lastRefreshPoint) {
-                return new Map(JSON.parse(events));
-            }
-            localStorage.removeItem('sportsDashboardCache');
-            return null;
-        }
-
-        const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-        function updateProgress(percentage) {
-            const progressBar = document.getElementById('progress-bar');
-            const progressText = document.getElementById('progress-text');
-            if (progressBar && progressText) {
-                const p = Math.min(100, Math.max(0, percentage));
-                progressBar.style.width = `${p}%`;
-                progressText.textContent = `${Math.round(p)}%`;
-            }
-        }
-
-        async function fetchSheetData() {
-            const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3rhQxYb78wgVMUssOAdfdaAA8x8jULNsw3PHhhg1vrjPYdfzEKR18DL-o9Z1KJEfyOs4zekgBkQb6/pub?gid=0&single=true&output=csv';
-            try {
-                const response = await fetch(sheetUrl);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                const csvText = await response.text();
-                csvText.split(/\r?\n/).slice(1).forEach(row => {
-                    const columns = row.split(',').map(c => c.trim());
-                    if (columns.length < 5 || !columns[0]) return;
-                    const [id, name, logo, date, sashType] = columns;
-                    const dateParts = date.split('/');
-                    if (dateParts.length !== 3) return;
-                    const formattedDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
-                    processAndAddEvent({
-                        idEvent: `sheet_${id}`, strLeague: name, logoUrl: logo, dateEvent: formattedDate,
-                        matchType: sashType ? sashType.trim().toUpperCase().replace(/\s+/g, '_') : undefined,
-                        isSheetEvent: true, strTime: '', isHidden: false
-                    });
-                });
-            } catch (error) {
-                console.error('Erro ao buscar ou processar dados da planilha:', error);
-            }
-        }
-        
-        function processAndAddEvent(event) {
-            if (allEvents.has(event.idEvent)) return;
-            if (event.isSheetEvent) {
-                event.importanceScore = 10;
-            } else {
-                const homeLevel = TEAM_LEVELS[event.idHomeTeam] || 1;
-                const awayLevel = TEAM_LEVELS[event.idAwayTeam] || 1;
-                event.importanceScore = homeLevel + awayLevel;
-                if (!event.matchType) {
-                    const leagueNameLower = (event.strLeague || '').toLowerCase();
-                    const roundNameLower = (event.intRound || '').toString().toLowerCase();
-                    if (['final', 'cup final', 'world cup', 'decisão'].some(k => leagueNameLower.includes(k) || roundNameLower.includes(k))) event.matchType = 'FINAL';
-                    else if (['semi-final', 'semifinal'].some(k => leagueNameLower.includes(k) || roundNameLower.includes(k))) event.matchType = 'SEMI_FINAL';
-                    else if (['quarter-final', 'quarterfinal', 'quartas de final'].some(k => leagueNameLower.includes(k) || roundNameLower.includes(k))) event.matchType = 'QUARTAS_FINAL';
-                }
-            }
-            allEvents.set(event.idEvent, event);
-        }
-
-        function getStatusTrafficLights(event) {
-            const statuses = event.statuses || { mkt: 'red', crm: 'red', tra: 'red' };
-            return ['mkt', 'crm', 'tra'].map(area => `
-                <div class="traffic-light" 
-                     style="background-color: ${STATUS_COLORS[statuses[area]]};"
-                     title="${area.toUpperCase()}"
-                     data-area="${area}" data-event-id="${event.idEvent}">
-                     ${area.toUpperCase()}
-                </div>
-            `).join('');
-        }
-        
-        function createTopEventCard(league, event) {
-            let sashHTML = '', visibilityIconHTML = '';
-            
-            if (event.matchType) {
-                let sashText = '', sashColorClass = '';
-                switch (event.matchType) {
-                    case 'FINAL': sashText = 'Final'; sashColorClass = 'bg-yellow-500'; break;
-                    case 'SEMI_FINAL': sashText = 'Semifinal'; sashColorClass = 'bg-gray-400'; break;
-                    case 'QUARTAS_FINAL': sashText = 'Quartas'; sashColorClass = 'bg-yellow-700'; break;
-                    case 'GALO': sashText = 'GALO'; sashColorClass = 'bg-red-600'; break;
-                    case 'INICIO': sashText = 'Início'; sashColorClass = 'bg-blue-500'; break;
-                }
-                if (sashText) sashHTML = `<div class="sash ${sashColorClass}">${sashText}</div>`;
-            }
-
-            const isEditable = !event.isSheetEvent;
-            if (isEditModeEnabled && isEditable) {
-                const iconClass = event.isHidden ? 'fa-plus' : 'fa-minus';
-                const title = event.isHidden ? 'Mostrar evento' : 'Esconder evento';
-                visibilityIconHTML = `<div class="visibility-toggle" title="${title}" data-event-id="${event.idEvent}"><i class="fas ${iconClass}"></i></div>`;
-            }
-
-            const editableAttribute = isEditable ? `data-editable="true"` : '';
-            let cardClasses = 'bg-white p-2 rounded-lg shadow-sm flex-shrink-0 w-28 flex flex-col items-center justify-center event-card relative overflow-hidden transition-opacity duration-300';
-            if (isEditable) cardClasses += ' cursor-pointer hover:ring-2 hover:ring-blue-500';
-            if (isEditModeEnabled && event.isHidden) cardClasses += ' opacity-50';
-
-            return `
-                <div class="${cardClasses}" ${editableAttribute} data-event-id="${event.idEvent}">
-                    ${visibilityIconHTML}
-                    ${sashHTML}
-                    <img src="${league.logo}" alt="${league.name}" class="h-10 object-contain" title="${league.name}">
-                    <p class="text-center text-xs font-bold mt-2">${formatDateForCard(event.dateEvent)}</p>
-                    <div class="mt-2 flex justify-center items-center gap-2 px-1">
-                        ${getStatusTrafficLights(event)}
-                    </div>
-                </div>
-            `;
-        }
-
-        function createTopMatchCard(event) {
-            let sashHTML = '';
-            if (event.matchType) {
-                let sashText = '', sashColorClass = '';
-                switch (event.matchType) {
-                    case 'FINAL': sashText = 'Final'; sashColorClass = 'bg-yellow-500'; break;
-                    case 'SEMI_FINAL': sashText = 'Semifinal'; sashColorClass = 'bg-gray-400'; break;
-                    case 'QUARTAS_FINAL': sashText = 'Quartas'; sashColorClass = 'bg-yellow-700'; break;
-                    case 'INICIO': sashText = 'Início'; sashColorClass = 'bg-blue-500'; break;
-                }
-                if (sashText) sashHTML = `<div class="sash ${sashColorClass}">${sashText}</div>`;
-            } else if (event.idHomeTeam === GALO_ID || event.idAwayTeam === GALO_ID) {
-                sashHTML = `<div class="sash bg-red-600">GALO</div>`;
-            }
-            
-            let cardContentHTML = '';
-            if (event.idLeague == UFC_LEAGUE_ID) {
-                let ufcEventName = (event.strEvent || '').includes(':') ? event.strEvent.split(':')[1].trim() : event.strEvent;
-                cardContentHTML = `<div class="text-center">
-                    <img src="https://www.thesportsdb.com/images/media/league/badge/026ms21549488383.png" alt="UFC" class="h-8 mx-auto">
-                    <p class="text-xs font-bold mt-1.5 truncate" title="${event.strEvent}">${ufcEventName}</p>
-                    <div class="flex items-baseline justify-center space-x-2 mt-1">
-                        <p class="text-xs font-bold">${formatDateForCard(event.dateEvent)}</p>
-                        <p class="text-xs text-gray-600">${event.strTime.substring(0,5)}</p>
-                    </div>
-                </div>`;
-            } else {
-                 cardContentHTML = `<div>
-                    <div class="flex justify-between items-center text-xs font-semibold text-gray-500 px-1">
-                        <span>${event.strLeague}</span>
-                    </div>
-                    <div class="flex items-center justify-around my-1.5">
-                        <img src="${event.strHomeTeamBadge}" alt="${event.strHomeTeam}" class="h-8 w-8 object-contain">
-                        <span class="font-bold text-gray-400 text-sm">vs</span>
-                        <img src="${event.strAwayTeamBadge}" alt="${event.strAwayTeam}" class="h-8 w-8 object-contain">
-                    </div>
-                    <div class="flex items-baseline justify-center space-x-2">
-                        <p class="text-sm font-bold">${formatDateForCard(event.dateEvent)}</p>
-                        <p class="text-xs text-gray-600">${event.strTime.substring(0,5)}</p>
-                    </div>
-                </div>`;
-            }
-            return `<div class="bg-white p-1.5 rounded-lg shadow-sm flex-shrink-0 w-44 flex flex-col justify-between relative overflow-hidden">${sashHTML}${cardContentHTML}<div class="mt-1.5 flex justify-center items-center gap-2 px-1">${getStatusTrafficLights(event)}</div></div>`;
-        }
-        
-        function createWeekGameItem(event) {
-            let eventName = (event.idLeague == UFC_LEAGUE_ID) 
-                ? ((event.strEvent || '').includes(':') ? event.strEvent.split(':')[1].trim() : event.strEvent)
-                : (event.strHomeTeam && event.strAwayTeam ? `${event.strHomeTeam} x ${event.strAwayTeam}` : event.strEvent || '');
-            if (!eventName) return '';
-            return `<div class="flex items-center justify-between py-0.5"><span class="text-xs text-gray-600 truncate pr-2" title="${event.strEvent}">${eventName}</span></div>`;
-        }
-
-        function formatDateForCard(dateStr) {
-            const date = new Date(dateStr + 'T00:00:00');
-            return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '');
-        }
-        
-        function renderPage(eventsArray) {
-            const sortedEvents = eventsArray.sort((a, b) => new Date(a.dateEvent) - new Date(b.dateEvent));
-            renderTopEvents(sortedEvents);
-            renderTopMatches(sortedEvents);
-            renderWeekGames(sortedEvents);
-            attachAllListeners();
-            document.getElementById('page-loader').style.display = 'none';
-            document.getElementById('main-content').classList.remove('hidden');
-            allEvents.forEach(event => listenToEventStatus(event.idEvent));
-        }
-        
-        // --- FUNÇÃO CORRIGIDA ---
-        function renderTopEvents(events) {
-            const container = document.getElementById('top-events-container');
-            container.innerHTML = '';
-
-            // 1. Filtra eventos que o usuário marcou para esconder (se não estiver em modo de edição)
-            let sourceEvents = events;
-            if (!isEditModeEnabled) {
-                sourceEvents = events.filter(event => !event.isHidden);
-            }
-
-            // 2. Cria uma lista com variedade: todos eventos da planilha + apenas o próximo evento de cada liga importante
-            const eventsWithVariety = [];
-            const processedLeagues = new Set();
-            sourceEvents.forEach(event => {
-                if (event.isSheetEvent) {
-                    eventsWithVariety.push(event); // Adiciona todos os eventos da planilha
-                } else if (IMPORTANT_LEAGUES.hasOwnProperty(event.idLeague) && !processedLeagues.has(event.idLeague)) {
-                    // Adiciona o evento de uma liga importante APENAS se essa liga ainda não foi adicionada
-                    eventsWithVariety.push(event);
-                    processedLeagues.add(event.idLeague);
-                }
-            });
-
-            // 3. Pega os primeiros 20 eventos dessa lista filtrada e com variedade
-            const eventsToRender = eventsWithVariety.slice(0, 20);
-
-            // 4. Renderiza os cards na tela
-            if (eventsToRender.length === 0) {
-                container.innerHTML = '<p class="text-gray-500">Nenhum evento principal encontrado.</p>';
-            } else {
-                eventsToRender.forEach(event => {
-                    let leagueInfo = event.isSheetEvent
-                        ? { id: event.idEvent, name: event.strLeague, logo: event.logoUrl }
-                        : { id: event.idLeague, name: event.strLeague, logo: IMPORTANT_LEAGUES[event.idLeague] };
-                    container.innerHTML += createTopEventCard(leagueInfo, event);
-                });
-            }
-        }
-        
-        function renderTopMatches(events) {
-            const container = document.getElementById('top-matches-container');
-            const TIER_1_THRESHOLD = 9, TIER_2_THRESHOLD = 7;
-            const matchesToDisplayMap = new Map();
-            events.filter(event => event.matchType && !event.isSheetEvent).forEach(event => matchesToDisplayMap.set(event.idEvent, event));
-            let starMatches = [];
-            const tier1Matches = events.filter(event => !event.isSheetEvent && (event.importanceScore || 0) >= TIER_1_THRESHOLD);
-            starMatches = (tier1Matches.length > 0) ? tier1Matches : events.filter(event => !event.isSheetEvent && (event.importanceScore || 0) >= TIER_2_THRESHOLD);
-            starMatches.forEach(event => { if (!matchesToDisplayMap.has(event.idEvent)) matchesToDisplayMap.set(event.idEvent, event); });
-            const sortedMatches = Array.from(matchesToDisplayMap.values()).sort((a, b) => new Date(a.dateEvent) - new Date(b.dateEvent));
-            container.innerHTML = sortedMatches.length > 0 ? sortedMatches.map(createTopMatchCard).join('') : '<p class="text-gray-500">Nenhum jogo de destaque encontrado.</p>';
-        }
-        
-        function getGamePriorityScore(game) {
-            let score = game.importanceScore || 0;
-            if (game.matchType === 'FINAL') score += 50;
-            if (game.matchType === 'SEMI_FINAL') score += 40;
-            if (game.matchType === 'QUARTAS_FINAL') score += 30;
-            if (game.idLeague == LIBERTADORES_LEAGUE_ID) score += 25;
-            if (game.idLeague == CHAMPIONS_LEAGUE_ID) score += 25;
-            if (game.idLeague == SUDAMERICANA_LEAGUE_ID) score += 25; 
-            if (game.idLeague == UFC_LEAGUE_ID) score += 15;
-            if (game.matchType === 'INICIO') score += 5;
-            return score;
-        }
-        
-        function renderWeekGames(events) {
-            const container = document.getElementById('week-games-container');
-            container.innerHTML = '';
-            const weekDates = Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() + i); return d; });
-            
-            weekDates.forEach(date => {
-                const dateString = date.toISOString().split('T')[0];
-                const gamesForDay = events.filter(e => e.dateEvent === dateString && !e.isSheetEvent);
-                const sortedGames = gamesForDay.sort((a, b) => getGamePriorityScore(b) - getGamePriorityScore(a));
-                
-                let gamesHTML = sortedGames.map(createWeekGameItem).join('');
-
-                if (sortedGames.length === 0) {
-                    gamesHTML = '<p class="text-xs text-gray-400">Sem jogos de destaque.</p>';
-                }
-
-                container.innerHTML += `
-                    <div class="bg-gray-800 p-2 rounded-lg">
-                        <h3 class="text-white font-bold text-center text-sm mb-1.5">${date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.','')}</h3>
-                        <div class="bg-white p-1.5 rounded-md space-y-1">${gamesHTML}</div>
-                    </div>
-                `;
-            });
-        }
-        
-        function attachAllListeners() {
-            document.querySelectorAll('.traffic-light').forEach(button => {
-                if (button.getAttribute('data-listener-attached')) return;
-                button.addEventListener('click', handleTrafficLightClick);
-                button.setAttribute('data-listener-attached', 'true');
-            });
-        }
-        
-        async function fetchAllData() {
-            updateProgress(0);
-            document.getElementById('page-loader').style.display = 'flex';
-            document.getElementById('main-content').classList.add('hidden');
-
-            const totalApiSources = MAIN_LEAGUE_IDS.length + FOOTBALL_TEAM_IDS.length;
-            let sourcesFetched = 0;
-            const updateApiProgress = () => updateProgress(++sourcesFetched / totalApiSources * 90);
-
-            const apiPromises = [];
-            MAIN_LEAGUE_IDS.forEach(id => apiPromises.push(fetch(`${BASE_URL}/eventsnextleague.php?id=${id}`).then(res => res.ok ? res.json() : Promise.reject()).then(result => result.events?.forEach(processAndAddEvent)).catch(console.error).finally(updateApiProgress)));
-            FOOTBALL_TEAM_IDS.forEach(id => apiPromises.push(fetch(`${BASE_URL}/eventsnext.php?id=${id}`).then(res => res.ok ? res.json() : Promise.reject()).then(result => result.events?.forEach(processAndAddEvent)).catch(console.error).finally(updateApiProgress)));
-            
-            await Promise.all(apiPromises);
-            await fetchSheetData();
-            updateProgress(92);
-            
-            const statusPromises = Array.from(allEvents.keys()).map(eventId => getDoc(doc(db, "event_statuses", eventId)).then(docSnapshot => {
-                const event = allEvents.get(eventId);
-                if (event) {
-                    const savedStatuses = docSnapshot.data() || {};
-                    event.statuses = { mkt: 'red', crm: 'red', tra: 'red', ...savedStatuses };
-                    if (savedStatuses.matchType !== undefined) event.matchType = savedStatuses.matchType;
-                    event.isHidden = savedStatuses.isHidden || false;
-                }
-            }));
-            await Promise.all(statusPromises);
-            updateProgress(98);
-
-            saveDataToCache(allEvents);
-            updateProgress(100);
-            await sleep(300);
-            renderPage(Array.from(allEvents.values()));
-        }
-
-        function listenToEventStatus(eventId) {
-            onSnapshot(doc(db, "event_statuses", eventId), (docSnapshot) => {
-                const event = allEvents.get(eventId);
-                if (event) {
-                    const savedStatuses = docSnapshot.data() || {};
-                    const hadSashChanged = event.matchType !== savedStatuses.matchType;
-                    const hadVisibilityChanged = event.isHidden !== savedStatuses.isHidden;
-
-                    event.statuses = { mkt: 'red', crm: 'red', tra: 'red', ...savedStatuses };
-                    if (savedStatuses.matchType !== undefined) event.matchType = savedStatuses.matchType;
-                    event.isHidden = savedStatuses.isHidden || false;
-
-                    document.querySelectorAll(`.traffic-light[data-event-id="${eventId}"]`).forEach(light => {
-                        const area = light.dataset.area;
-                        if (area && event.statuses[area]) light.style.backgroundColor = STATUS_COLORS[event.statuses[area]];
-                    });
-
-                    if(hadSashChanged || hadVisibilityChanged) {
-                        const sortedEvents = Array.from(allEvents.values()).sort((a, b) => new Date(a.dateEvent) - new Date(b.dateEvent));
-                        renderTopEvents(sortedEvents);
-                        renderTopMatches(sortedEvents);
-                        attachAllListeners();
-                    }
-                    saveDataToCache(allEvents);
-                }
-            });
-        }
-
-        async function handleTrafficLightClick(e) {
-            e.stopPropagation();
-            const { eventId, area } = e.currentTarget.dataset;
-            if (!eventId || !area) return;
-            const event = allEvents.get(eventId), statusCycle = ['red', 'yellow', 'green'];
-            const currentStatus = (event?.statuses && event.statuses[area]) || 'red';
-            const nextStatus = statusCycle[(statusCycle.indexOf(currentStatus) + 1) % statusCycle.length];
-            await setDoc(doc(db, "event_statuses", eventId), { [area]: nextStatus }, { merge: true });
-        }
-        
-        function toggleEditModeToast() {
-            const toast = document.getElementById('edit-mode-toast');
-            if (isEditModeEnabled) toast.classList.remove('hidden', 'translate-y-20');
-            else {
-                toast.classList.add('translate-y-20');
-                setTimeout(() => toast.classList.add('hidden'), 300);
-            }
-        }
-
-        function openSashModal(eventId) {
-            const event = allEvents.get(eventId);
-            if (!event) return;
-            const modal = document.getElementById('sash-edit-modal');
-            document.getElementById('sash-select').value = event.matchType || '';
-            modal.dataset.editingEventId = eventId;
-            modal.classList.remove('hidden');
-        }
-
-        async function saveSashChange() {
-            const modal = document.getElementById('sash-edit-modal');
-            const eventId = modal.dataset.editingEventId;
-            const newSashValue = document.getElementById('sash-select').value;
-            if (!eventId) return;
-            await setDoc(doc(db, "event_statuses", eventId), { matchType: newSashValue }, { merge: true });
-            modal.classList.add('hidden');
-        }
-
-        async function handleVisibilityToggle(eventId) {
-            const event = allEvents.get(eventId);
-            if (!event) return;
-            const newVisibility = !event.isHidden;
-            await setDoc(doc(db, "event_statuses", eventId), { isHidden: newVisibility }, { merge: true });
-        }
-        
-        async function initialize() {
-            db = getFirestore(initializeApp(firebaseConfig));
-            
-            document.addEventListener('keydown', (e) => {
-                if (e.ctrlKey && e.key.toLowerCase() === 'k') {
-                    e.preventDefault();
-                    isEditModeEnabled = !isEditModeEnabled;
-                    toggleEditModeToast();
-                    const sortedEvents = Array.from(allEvents.values()).sort((a, b) => new Date(a.dateEvent) - new Date(b.dateEvent));
-                    renderTopEvents(sortedEvents);
-                    attachAllListeners();
-                }
-            });
-
-            document.getElementById('top-events-container').addEventListener('click', (e) => {
-                if (!isEditModeEnabled) return;
-                
-                const visibilityToggle = e.target.closest('.visibility-toggle');
-                if (visibilityToggle) {
-                    e.stopPropagation();
-                    handleVisibilityToggle(visibilityToggle.dataset.eventId);
-                    return;
-                }
-
-                const editableCard = e.target.closest('.event-card[data-editable="true"]');
-                if (editableCard) {
-                    openSashModal(editableCard.dataset.eventId);
-                }
-            });
-
-            document.getElementById('save-sash-btn').addEventListener('click', saveSashChange);
-            document.getElementById('cancel-sash-btn').addEventListener('click', () => document.getElementById('sash-edit-modal').classList.add('hidden'));
-
-            const cachedEvents = loadDataFromCache();
-            if (cachedEvents?.size > 0) {
-                allEvents = cachedEvents;
-                renderPage(Array.from(allEvents.values()));
-            } else {
-                fetchAllData();
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', initialize);
-    </script>
+    document.addEventListener('DOMContentLoaded', initialize);
+</script>
 </body>
 </html>
