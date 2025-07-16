@@ -370,7 +370,7 @@
             }
             if (sashText) sashHTML = `<div class="sash ${sashColorClass}">${sashText}</div>`;
         }
-        const isEditable = !event.isSheetEvent;
+        const isEditable = true;
         if (isEditModeEnabled && isEditable) {
             const iconClass = event.isHidden ? 'fa-plus' : 'fa-minus';
             const title = event.isHidden ? 'Mostrar evento' : 'Esconder evento';
@@ -731,7 +731,9 @@
         const oldValue = event.matchType || null;
 
         if (oldValue !== newSashValue) {
-            logChange(eventId, 'matchType', oldValue, newSashValue, `Faixa de "${event.strEvent.substring(0, 20)}..." alterada para ${newSashValue || 'Nenhuma'}.`);
+            // Linha corrigida
+const eventName = event.strEvent || event.strLeague; // Usa strEvent ou recorre a strLeague
+logChange(eventId, 'matchType', oldValue, newSashValue, `Faixa de "${eventName.substring(0, 20)}..." alterada para ${newSashValue || 'Nenhuma'}.`);
             await setDoc(doc(db, "event_statuses", eventId), { matchType: newSashValue }, { merge: true });
         }
         modal.classList.add('hidden');
