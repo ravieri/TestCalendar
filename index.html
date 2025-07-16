@@ -243,36 +243,19 @@
     }
 
     function loadDataFromCache() {
-    const cachedData = localStorage.getItem('sportsDashboardCache');
-    if (!cachedData) return null;
-    
-    const { timestamp, events } = JSON.parse(cachedData);
-    const cacheDate = new Date(timestamp);
-    const now = new Date();
-    const todayNoon = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
-    const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-    let lastRefreshPoint = (now >= todayNoon) ? todayNoon : todayMidnight;
+    /* * Esta função foi modificada para desabilitar o cache.
+     * Agora, ela limpa todos os dados de armazenamento do navegador a cada visita
+     * e retorna 'null' para forçar a busca de dados 100% atualizados.
+     */
+    console.log("CACHE DESABILITADO: Forçando a busca de novos dados a cada visita.");
 
-    if (cacheDate >= lastRefreshPoint) {
-        // O cache ainda é válido, retorna os dados.
-        return new Map(JSON.parse(events));
-    }
-
-    // Se o cache estiver desatualizado, executa a limpeza completa
-    console.log("Cache desatualizado. Limpando todo o armazenamento do navegador...");
-    
-    // 1. Limpa TODO o Local Storage
+    // Limpa qualquer cache ou dado de sessão antigo
     localStorage.clear();
-    console.log("Local Storage limpo.");
-
-    // 2. Limpa o Session Storage
     sessionStorage.clear();
-    console.log("Session Storage limpo.");
-
-    // 3. Limpa os Cookies do domínio
-    clearAllCookies();
+    clearAllCookies(); // Esta função já existe no seu código e limpa os cookies
     
-    return null; // Força a busca de novos dados
+    // Retorna 'null' para obrigar a função initialize() a chamar fetchAllData()
+    return null; 
 }
 
     const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -499,34 +482,33 @@
     }
 
     function renderTopEvents(events) {
-        const container = document.getElementById('top-events-container');
-        container.innerHTML = '';
-        let sourceEvents = events;
-        if (!isEditModeEnabled) {
-            sourceEvents = events.filter(event => !event.isHidden);
-        }
-        const eventsWithVariety = [];
-        const processedLeagues = new Set();
-        sourceEvents.forEach(event => {
-            if (event.isSheetEvent) {
-                eventsWithVariety.push(event);
-            } else if (IMPORTANT_LEAGUES.hasOwnProperty(event.idLeague) && !processedLeagues.has(event.idLeague)) {
-                eventsWithVariety.push(event);
-                processedLeagues.add(event.idLeague);
-            }
-        });
-        const eventsToRender = eventsWithVariety.slice(0, 20);
-        if (eventsToRender.length === 0) {
-            container.innerHTML = '<p class="text-gray-500">Nenhum evento principal encontrado.</p>';
-        } else {
-            eventsToRender.forEach(event => {
-                let leagueInfo = event.isSheetEvent
-                    ? { id: event.idEvent, name: event.strLeague, logo: event.logoUrl }
-                    : { id: event.idLeague, name: event.strLeague, logo: IMPORTANT_LEAGUES[event.idLeague] };
-                container.innerHTML += createTopEventCard(leagueInfo, event);
-            });
-        }
+    const container = document.getElementById('top-events-container');
+    container.innerHTML = '';
+
+    // 1. Filtra a lista de eventos para pegar SOMENTE os que vêm do Google Sheets.
+    let eventsToRender = events.filter(event => event.isSheetEvent);
+
+    // 2. Se o modo de edição não estiver ativo, continua respeitando a regra de ocultar eventos.
+    if (!isEditModeEnabled) {
+        eventsToRender = eventsToRender.filter(event => !event.isHidden);
     }
+
+    if (eventsToRender.length === 0) {
+        // Mensagem de fallback caso não haja eventos no Sheets.
+        container.innerHTML = '<p class="text-gray-500">Nenhum evento cadastrado no Sheets.</p>';
+    } else {
+        // 3. Renderiza os cards para cada evento do Sheets.
+        eventsToRender.forEach(event => {
+            // A lógica para obter as informações do evento fica mais simples.
+            const leagueInfo = { 
+                id: event.idEvent, 
+                name: event.strLeague, 
+                logo: event.logoUrl 
+            };
+            container.innerHTML += createTopEventCard(leagueInfo, event);
+        });
+    }
+}
 
     function renderTopMatches(events) {
         const container = document.getElementById('top-matches-container');
