@@ -26,16 +26,11 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #e2e8f0; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #94a3b8; border-radius: 20px; }
 
-        .sash {
-            position: absolute; top: 12px; right: -30px;
-            transform: rotate(45deg); padding: 2px 30px;
-            color: white; font-size: 10px; font-weight: bold;
-            text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            text-transform: uppercase; z-index: 2;
-        }
+        
         #progress-bar {
             transition: width 0.3s ease-in-out;
         }
+        /* Ícone de visibilidade para ocultar/mostrar rapidamente */
         .visibility-toggle {
             position: absolute;
             top: 5px;
@@ -50,13 +45,13 @@
             justify-content: center;
             font-size: 12px;
             cursor: pointer;
-            z-index: 3;
+            z-index: 10; 
             transition: background-color 0.2s;
         }
         .visibility-toggle:hover {
             background-color: rgba(0, 0, 0, 0.8);
         }
-        .event-card-match {
+        .event-card, .event-card-match {
             cursor: pointer;
         }
         #undo-button:disabled {
@@ -64,25 +59,21 @@
             cursor: not-allowed;
             color: #6b7280;
         }
-        /* Classe para ocultar o header */
         .header-hidden {
             transform: translateY(-100%);
         }
-        /* Zona de ativação do header */
         #header-trigger-zone {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            height: 5px; /* Altura da área de ativação */
-            z-index: 100; /* Garante que esteja acima de outros elementos */
+            height: 5px;
+            z-index: 100;
         }
-
-        /* Estilo para o cursor enquanto arrasta */
         .dragging {
             cursor: grabbing;
             cursor: -webkit-grabbing;
-            user-select: none; /* Impede a seleção de texto durante o arraste */
+            user-select: none;
         }
     </style>
 </head>
@@ -167,34 +158,32 @@
         Modo de Edição Ativado.
     </div>
 
-    <div id="sash-edit-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-40">
-        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
-            <h3 class="text-lg font-bold mb-4">Editar Faixa do Evento</h3>
-            <label for="sash-select" class="block text-sm font-medium text-gray-700 mb-2">Selecione a faixa:</label>
-            <select id="sash-select" class="w-full p-2 border border-gray-300 rounded-md shadow-sm">
-                <option value="">Nenhuma</option>
-                <option value="INICIO">Início</option>
-                <option value="FINAL">Final</option>
-                <option value="SEMI_FINAL">Semifinal</option>
-                <option value="QUARTAS_FINAL">Quartas</option>
-                <option value="GALO">GALO</option>
-            </select>
-            <div class="mt-6 flex justify-end space-x-3">
-                <button id="cancel-sash-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">Cancelar</button>
-                <button id="save-sash-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Salvar</button>
-            </div>
-        </div>
-    </div>
+    <div id="generic-edit-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-40">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h3 class="text-lg font-bold mb-2">Editar Evento / Partida</h3>
+            <p id="event-name-in-modal" class="text-sm text-gray-600 mb-4 truncate"></p>
 
-    <div id="date-edit-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-40">
-        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
-            <h3 class="text-lg font-bold mb-4">Alterar Data do Jogo</h3>
-            <p id="event-name-in-modal" class="text-sm text-gray-600 mb-3"></p>
-            <label for="date-input" class="block text-sm font-medium text-gray-700 mb-2">Selecione a nova data:</label>
-            <input type="date" id="date-input" class="w-full p-2 border border-gray-300 rounded-md shadow-sm">
+            <div class="space-y-4">
+                <div>
+                    <label for="generic-date-input" class="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                    <input type="date" id="generic-date-input" class="w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                </div>
+                <div>
+                    <label for="generic-sash-select" class="block text-sm font-medium text-gray-700 mb-1">Faixa / Tipo</label>
+                    <select id="generic-sash-select" class="w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                        <option value="">Nenhuma</option>
+                        <option value="INICIO">Início</option>
+                        <option value="FINAL">Final</option>
+                        <option value="SEMI_FINAL">Semifinal</option>
+                        <option value="QUARTAS_FINAL">Quartas</option>
+                        <option value="GALO">GALO</option>
+                    </select>
+                </div>
+            </div>
+
             <div class="mt-6 flex justify-end space-x-3">
-                <button id="cancel-date-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">Cancelar</button>
-                <button id="save-date-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Salvar</button>
+                <button id="cancel-generic-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">Cancelar</button>
+                <button id="save-generic-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Salvar Alterações</button>
             </div>
         </div>
     </div>
@@ -202,7 +191,6 @@
 
     <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    // ATUALIZAÇÃO: Importando funções de autenticação
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
@@ -243,28 +231,17 @@
     }
 
     function loadDataFromCache() {
-    /* * Esta função foi modificada para desabilitar o cache.
-     * Agora, ela limpa todos os dados de armazenamento do navegador a cada visita
-     * e retorna 'null' para forçar a busca de dados 100% atualizados.
-     */
-    console.log("CACHE DESABILITADO: Forçando a busca de novos dados a cada visita.");
-
-    // Limpa qualquer cache ou dado de sessão antigo
-    localStorage.clear();
-    sessionStorage.clear();
-    clearAllCookies(); // Esta função já existe no seu código e limpa os cookies
-    
-    // Retorna 'null' para obrigar a função initialize() a chamar fetchAllData()
-    return null; 
-}
+        console.log("CACHE DESABILITADO: Forçando a busca de novos dados a cada visita.");
+        localStorage.clear();
+        sessionStorage.clear();
+        clearAllCookies();
+        return null; 
+    }
 
     const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-    // --- NOVA FUNÇÃO PARA LIMPAR COOKIES ---
     function clearAllCookies() {
-        // Esta função só pode limpar cookies do mesmo domínio (no seu caso, 127.0.0.1)
         const cookies = document.cookie.split(";");
-
         for (let i = 0; i < cookies.length; i++) {
             const cookie = cookies[i];
             const eqPos = cookie.indexOf("=");
@@ -300,7 +277,7 @@
                 processAndAddEvent({
                     idEvent: `sheet_${id}`, strLeague: name, logoUrl: logo, dateEvent: formattedDate,
                     matchType: sashType ? sashType.trim().toUpperCase().replace(/\s+/g, '_') : undefined,
-                    isSheetEvent: true, strTime: '', isHidden: false
+                    isSheetEvent: true, strTime: '', isHidden: false, strEvent: name
                 });
             });
         } catch (error) {
@@ -340,35 +317,47 @@
         `).join('');
     }
 
-    function createTopEventCard(league, event) {
-        let sashHTML = '', visibilityIconHTML = '';
-        if (event.matchType) {
-            let sashText = '', sashColorClass = '';
-            switch (event.matchType) {
-                case 'FINAL': sashText = 'Final'; sashColorClass = 'bg-yellow-500'; break;
-                case 'SEMI_FINAL': sashText = 'Semifinal'; sashColorClass = 'bg-gray-400'; break;
-                case 'QUARTAS_FINAL': sashText = 'Quartas'; sashColorClass = 'bg-yellow-700'; break;
-                case 'GALO': sashText = 'GALO'; sashColorClass = 'bg-red-600'; break;
-                case 'INICIO': sashText = 'Início'; sashColorClass = 'bg-blue-500'; break;
-            }
-            if (sashText) sashHTML = `<div class="sash ${sashColorClass}">${sashText}</div>`;
-        }
-        const isEditable = true;
-        if (isEditModeEnabled && isEditable) {
-            const iconClass = event.isHidden ? 'fa-plus' : 'fa-minus';
-            const title = event.isHidden ? 'Mostrar evento' : 'Esconder evento';
-            visibilityIconHTML = `<div class="visibility-toggle" title="${title}" data-event-id="${event.idEvent}"><i class="fas ${iconClass}"></i></div>`;
-        }
-        const editableAttribute = isEditable ? `data-editable="true"` : '';
-        let cardClasses = 'bg-white p-2 rounded-lg shadow-sm flex-shrink-0 w-28 flex flex-col items-center justify-center event-card relative overflow-hidden transition-opacity duration-300';
-        if (isEditable && isEditModeEnabled) cardClasses += ' cursor-pointer hover:ring-2 hover:ring-blue-500';
-        if (isEditModeEnabled && event.isHidden) cardClasses += ' opacity-50';
+    // Função auxiliar para criar o ícone de visibilidade
+    function createVisibilityToggleHTML(event) {
+        if (!isEditModeEnabled) return '';
+
+        const iconClass = event.isHidden ? 'fa-plus' : 'fa-minus';
+        const title = event.isHidden ? 'Mostrar este evento' : 'Ocultar este evento';
         return `
-            <div class="${cardClasses}" ${editableAttribute} data-event-id="${event.idEvent}">
+            <div class="visibility-toggle" title="${title}" data-event-id="${event.idEvent}">
+                <i class="fas ${iconClass}"></i>
+            </div>
+        `;
+    }
+
+    function createTopEventCard(league, event) {
+        const visibilityIconHTML = createVisibilityToggleHTML(event);
+        let matchTypeHTML = '';
+        if (event.matchType) {
+            let matchTypeText = '';
+            switch (event.matchType) {
+                case 'FINAL': matchTypeText = 'Final'; break;
+                case 'SEMI_FINAL': matchTypeText = 'Semifinal'; break;
+                case 'QUARTAS_FINAL': matchTypeText = 'Quartas'; break;
+                case 'GALO': matchTypeText = 'GALO'; break;
+                case 'INICIO': matchTypeText = 'Início'; break;
+            }
+            if (matchTypeText) {
+                matchTypeHTML = `<p class="text-center text-xs font-semibold text-indigo-600 -mt-1">${matchTypeText}</p>`;
+            }
+        }
+
+        let cardClasses = 'bg-white p-2 rounded-lg shadow-sm flex-shrink-0 w-28 flex flex-col items-center justify-center event-card relative overflow-hidden transition-opacity duration-300';
+        if (isEditModeEnabled) cardClasses += ' cursor-pointer hover:ring-2 hover:ring-blue-500';
+        if (!isEditModeEnabled && event.isHidden) cardClasses += ' hidden';
+        if (isEditModeEnabled && event.isHidden) cardClasses += ' opacity-50';
+
+        return `
+            <div class="${cardClasses}" data-event-id="${event.idEvent}">
                 ${visibilityIconHTML}
-                ${sashHTML}
                 <img src="${league.logo}" alt="${league.name}" class="h-10 object-contain" title="${league.name}">
                 <p class="text-center text-xs font-bold mt-2">${formatDateForCard(event.effectiveDate)}</p>
+                ${matchTypeHTML}
                 <div class="mt-2 flex justify-center items-center gap-2 px-1">
                     ${getStatusTrafficLights(event)}
                 </div>
@@ -377,19 +366,24 @@
     }
 
     function createTopMatchCard(event) {
-        let sashHTML = '';
+        const visibilityIconHTML = createVisibilityToggleHTML(event);
+        let matchTypeHTML = '';
+        let matchTypeText = '';
+
         if (event.matchType) {
-            let sashText = '', sashColorClass = '';
             switch (event.matchType) {
-                case 'FINAL': sashText = 'Final'; sashColorClass = 'bg-yellow-500'; break;
-                case 'SEMI_FINAL': sashText = 'Semifinal'; sashColorClass = 'bg-gray-400'; break;
-                case 'QUARTAS_FINAL': sashText = 'Quartas'; sashColorClass = 'bg-yellow-700'; break;
-                case 'INICIO': sashText = 'Início'; sashColorClass = 'bg-blue-500'; break;
+                case 'FINAL': matchTypeText = 'Final'; break;
+                case 'SEMI_FINAL': matchTypeText = 'Semifinal'; break;
+                case 'QUARTAS_FINAL': matchTypeText = 'Quartas'; break;
+                case 'INICIO': matchTypeText = 'Início'; break;
+                case 'GALO': matchTypeText = 'GALO'; break;
             }
-            if (sashText) sashHTML = `<div class="sash ${sashColorClass}">${sashText}</div>`;
-        } else if (event.idHomeTeam === GALO_ID || event.idAwayTeam === GALO_ID) {
-            sashHTML = `<div class="sash bg-red-600">GALO</div>`;
         }
+        
+        if (matchTypeText) {
+            matchTypeHTML = `<p class="text-center text-xs font-semibold text-indigo-700">${matchTypeText}</p>`;
+        }
+
         let cardContentHTML = '';
         if (event.idLeague == UFC_LEAGUE_ID) {
             let ufcEventName = (event.strEvent || '').includes(':') ? event.strEvent.split(':')[1].trim() : event.strEvent;
@@ -400,6 +394,7 @@
                     <p class="text-xs font-bold">${formatDateForCard(event.effectiveDate)}</p>
                     <p class="text-xs text-gray-600">${event.strTime.substring(0,5)}</p>
                 </div>
+                ${matchTypeHTML}
             </div>`;
         } else {
              cardContentHTML = `<div>
@@ -415,46 +410,53 @@
                     <p class="text-sm font-bold">${formatDateForCard(event.effectiveDate)}</p>
                     <p class="text-xs text-gray-600">${event.strTime.substring(0,5)}</p>
                 </div>
+                ${matchTypeHTML}
             </div>`;
         }
         let cardClasses = "bg-white p-1.5 rounded-lg shadow-sm flex-shrink-0 w-44 flex flex-col justify-between relative overflow-hidden event-card-match";
         if (isEditModeEnabled) cardClasses += " hover:ring-2 hover:ring-indigo-500";
-        return `<div class="${cardClasses}" data-event-id="${event.idEvent}">${sashHTML}${cardContentHTML}<div class="mt-1.5 flex justify-center items-center gap-2 px-1">${getStatusTrafficLights(event)}</div></div>`;
+        if (!isEditModeEnabled && event.isHidden) cardClasses += ' hidden';
+        if (isEditModeEnabled && event.isHidden) cardClasses += ' opacity-50';
+        
+        return `<div class="${cardClasses}" data-event-id="${event.idEvent}">${visibilityIconHTML}${cardContentHTML}<div class="mt-1.5 flex justify-center items-center gap-2 px-1">${getStatusTrafficLights(event)}</div></div>`;
     }
 
     function createWeekGameItem(event) {
-    let itemHTML = '';
+        let itemHTML = '';
+        let tooltipText = '';
 
-    // Lógica para Futebol
-    if (event.idHomeTeam && event.strAwayTeam) {
-        const homeTeamShort = (event.strHomeTeam || '').substring(0, 4);
-        const awayTeamShort = (event.strAwayTeam || '').substring(0, 4);
-        // ADICIONAMOS LARGURA FIXA (w-12) E ALINHAMENTO AOS NOMES DOS TIMES
-        itemHTML = `
-            <img src="${event.strHomeTeamBadge}" alt="${homeTeamShort}" class="w-4 h-4 object-contain">
-            <span class="w-12 text-left font-medium text-gray-700 pl-2">${homeTeamShort}</span>
-            <span class="mx-1 text-gray-400 text-xs">vs</span>
-            <span class="w-12 text-right font-medium text-gray-700 pr-2">${awayTeamShort}</span>
-            <img src="${event.strAwayTeamBadge}" alt="${awayTeamShort}" class="w-4 h-4 object-contain">
-        `;
-    } 
-    // Lógica para UFC e outros eventos (permanece a mesma)
-    else {
-        let eventName = (event.strEvent || '');
-        if (event.idLeague == UFC_LEAGUE_ID) {
-            eventName = eventName.includes(':') ? eventName.split(':')[1].trim() : eventName;
-            itemHTML = `<i class="fas fa-hand-fist text-red-500 w-4 text-center mr-2"></i>`;
+        if (event.idHomeTeam && event.strAwayTeam) {
+            const homeTeamShort = (event.strHomeTeam || '').substring(0, 4);
+            const awayTeamShort = (event.strAwayTeam || '').substring(0, 4);
+            itemHTML = `
+                <img src="${event.strHomeTeamBadge}" alt="${homeTeamShort}" class="w-4 h-4 object-contain">
+                <span class="w-12 text-left font-medium text-gray-700 pl-2">${homeTeamShort}</span>
+                <span class="mx-1 text-gray-400 text-xs">vs</span>
+                <span class="w-12 text-right font-medium text-gray-700 pr-2">${awayTeamShort}</span>
+                <img src="${event.strAwayTeamBadge}" alt="${awayTeamShort}" class="w-4 h-4 object-contain">
+            `;
+            tooltipText = `Evento: ${event.strEvent}\nCampeonato: ${event.strLeague}\nTimes: ${event.strHomeTeam} vs ${event.strAwayTeam}`;
+        } 
+        else {
+            let eventName = (event.strEvent || '');
+            if (event.idLeague == UFC_LEAGUE_ID) {
+                eventName = eventName.includes(':') ? eventName.split(':')[1].trim() : eventName;
+                itemHTML = `<i class="fas fa-hand-fist text-red-500 w-4 text-center mr-2"></i>`;
+            }
+            itemHTML += `<span class="font-medium text-gray-700">${eventName}</span>`;
+            tooltipText = `Evento: ${event.strEvent}\nCampeonato: ${event.strLeague}`;
         }
-        itemHTML += `<span class="font-medium text-gray-700">${eventName}</span>`;
-    }
+        
+        let containerClasses = "flex items-center justify-center text-xs";
+        if (!isEditModeEnabled && event.isHidden) containerClasses += ' hidden';
+        if (isEditModeEnabled && event.isHidden) containerClasses += ' opacity-50';
 
-    // Monta a linha completa do evento
-    return `
-        <div class="flex items-center justify-center text-xs" title="${event.strEvent || ''}">
-            ${itemHTML}
-        </div>
-    `;
-}
+        return `
+            <div class="${containerClasses}" title="${tooltipText}" data-event-id="${event.idEvent}">
+                ${itemHTML}
+            </div>
+        `;
+    }
 
     function formatDateForCard(dateStr) {
         if (!dateStr) return 'Data indet.';
@@ -482,33 +484,19 @@
     }
 
     function renderTopEvents(events) {
-    const container = document.getElementById('top-events-container');
-    container.innerHTML = '';
+        const container = document.getElementById('top-events-container');
+        container.innerHTML = '';
+        let eventsToRender = events.filter(event => event.isSheetEvent);
 
-    // 1. Filtra a lista de eventos para pegar SOMENTE os que vêm do Google Sheets.
-    let eventsToRender = events.filter(event => event.isSheetEvent);
-
-    // 2. Se o modo de edição não estiver ativo, continua respeitando a regra de ocultar eventos.
-    if (!isEditModeEnabled) {
-        eventsToRender = eventsToRender.filter(event => !event.isHidden);
+        if (eventsToRender.length === 0) {
+            container.innerHTML = '<p class="text-gray-500">Nenhum evento cadastrado no Sheets.</p>';
+        } else {
+            eventsToRender.forEach(event => {
+                const leagueInfo = { id: event.idEvent, name: event.strLeague, logo: event.logoUrl };
+                container.innerHTML += createTopEventCard(leagueInfo, event);
+            });
+        }
     }
-
-    if (eventsToRender.length === 0) {
-        // Mensagem de fallback caso não haja eventos no Sheets.
-        container.innerHTML = '<p class="text-gray-500">Nenhum evento cadastrado no Sheets.</p>';
-    } else {
-        // 3. Renderiza os cards para cada evento do Sheets.
-        eventsToRender.forEach(event => {
-            // A lógica para obter as informações do evento fica mais simples.
-            const leagueInfo = { 
-                id: event.idEvent, 
-                name: event.strLeague, 
-                logo: event.logoUrl 
-            };
-            container.innerHTML += createTopEventCard(leagueInfo, event);
-        });
-    }
-}
 
     function renderTopMatches(events) {
         const container = document.getElementById('top-matches-container');
@@ -537,30 +525,30 @@
     }
 
     function renderWeekGames(events) {
-    const container = document.getElementById('week-games-container');
-    container.innerHTML = '';
-    const weekDates = Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() + i); return d; });
+        const container = document.getElementById('week-games-container');
+        container.innerHTML = '';
+        const weekDates = Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() + i); return d; });
 
-    weekDates.forEach(date => {
-        const dateString = date.toISOString().split('T')[0];
-        const gamesForDay = events.filter(e => e.effectiveDate === dateString && !e.isSheetEvent);
-        const sortedGames = gamesForDay.sort((a, b) => getGamePriorityScore(b) - getGamePriorityScore(a));
-        
-        let gamesHTML = sortedGames.map(createWeekGameItem).join('');
+        weekDates.forEach(date => {
+            const dateString = date.toISOString().split('T')[0];
+            const gamesForDay = events.filter(e => e.effectiveDate === dateString && !e.isSheetEvent);
+            const sortedGames = gamesForDay.sort((a, b) => getGamePriorityScore(b) - getGamePriorityScore(a));
+            let gamesHTML = sortedGames.map(createWeekGameItem).join('');
+            if (sortedGames.every(g => g.isHidden) && !isEditModeEnabled) {
+                 gamesHTML = '<p class="text-xs text-gray-400 mt-2">Sem jogos de destaque.</p>';
+            }
+             if (gamesForDay.length === 0) {
+                 gamesHTML = '<p class="text-xs text-gray-400 mt-2">Sem jogos de destaque.</p>';
+             }
 
-        if (sortedGames.length === 0) {
-            gamesHTML = '<p class="text-xs text-gray-400 mt-2">Sem jogos de destaque.</p>';
-        }
-        
-        // Removemos os divs de fundo, deixando o conteúdo direto na página
-        container.innerHTML += `
-            <div>
-                <h3 class="bg-gray-800 text-white font-bold text-center text-sm mb-2 rounded py-1">${date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '')}</h3>
-                <div class="space-y-2">${gamesHTML}</div>
-            </div>
-        `;
-    });
-}
+            container.innerHTML += `
+                <div>
+                    <h3 class="bg-gray-800 text-white font-bold text-center text-sm mb-2 rounded py-1">${date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '')}</h3>
+                    <div class="space-y-2">${gamesHTML}</div>
+                </div>
+            `;
+        });
+    }
 
     function attachAllListeners() {
         document.querySelectorAll('.traffic-light').forEach(button => {
@@ -586,12 +574,12 @@
         const statusPromises = Array.from(allEvents.keys()).map(eventId => getDoc(doc(db, "event_statuses", eventId)).then(docSnapshot => {
             const event = allEvents.get(eventId);
             if (event) {
-                const savedStatuses = docSnapshot.data() || {};
-                event.statuses = { mkt: 'red', crm: 'red', tra: 'red', ...savedStatuses };
-                event.matchType = savedStatuses.matchType;
-                event.customDate = savedStatuses.customDate;
-                event.effectiveDate = event.customDate || event.dateEvent;
-                event.isHidden = savedStatuses.isHidden || false;
+                const savedData = docSnapshot.data() || {};
+                event.statuses = { mkt: 'red', crm: 'red', tra: 'red', ...savedData };
+                event.matchType = savedData.matchType;
+                event.customDate = savedData.customDate;
+                event.effectiveDate = savedData.customDate || event.dateEvent;
+                event.isHidden = savedData.isHidden || false;
             }
         }));
         await Promise.all(statusPromises);
@@ -606,20 +594,23 @@
         onSnapshot(doc(db, "event_statuses", eventId), (docSnapshot) => {
             const event = allEvents.get(eventId);
             if (event) {
-                const savedStatuses = docSnapshot.data() || {};
-                const hadSashChanged = event.matchType !== savedStatuses.matchType;
-                const hadVisibilityChanged = event.isHidden !== savedStatuses.isHidden;
-                const hadDateChanged = event.customDate !== savedStatuses.customDate;
-                event.statuses = { mkt: 'red', crm: 'red', tra: 'red', ...savedStatuses };
-                event.matchType = savedStatuses.matchType;
-                event.customDate = savedStatuses.customDate;
-                event.effectiveDate = event.customDate || event.dateEvent;
-                event.isHidden = savedStatuses.isHidden || false;
+                const savedData = docSnapshot.data() || {};
+                const needsRerender = event.matchType !== savedData.matchType ||
+                                      event.isHidden !== (savedData.isHidden || false) ||
+                                      event.customDate !== savedData.customDate;
+
+                event.statuses = { mkt: 'red', crm: 'red', tra: 'red', ...savedData };
+                event.matchType = savedData.matchType;
+                event.customDate = savedData.customDate;
+                event.effectiveDate = savedData.customDate || event.dateEvent;
+                event.isHidden = savedData.isHidden || false;
+
                 document.querySelectorAll(`.traffic-light[data-event-id="${eventId}"]`).forEach(light => {
                     const area = light.dataset.area;
                     if (area && event.statuses[area]) light.style.backgroundColor = STATUS_COLORS[event.statuses[area]];
                 });
-                if(hadSashChanged || hadVisibilityChanged || hadDateChanged) {
+
+                if (needsRerender) {
                    rerenderAllSections();
                 }
                 saveDataToCache(allEvents);
@@ -628,25 +619,29 @@
     }
 
     async function handleTrafficLightClick(e) {
-    e.stopPropagation();
-    const { eventId, area } = e.currentTarget.dataset;
-    if (!eventId || !area) return;
+        e.stopPropagation();
+        const { eventId, area } = e.currentTarget.dataset;
+        if (!eventId || !area) return;
 
-    const event = allEvents.get(eventId);
-    const statusCycle = ['red', 'yellow', 'green'];
-    const currentStatus = (event?.statuses && event.statuses[area]) || 'red';
-    const nextStatus = statusCycle[(statusCycle.indexOf(currentStatus) + 1) % statusCycle.length];
+        const event = allEvents.get(eventId);
+        const statusCycle = ['red', 'yellow', 'green'];
+        const currentStatus = (event?.statuses && event.statuses[area]) || 'red';
+        const nextStatus = statusCycle[(statusCycle.indexOf(currentStatus) + 1) % statusCycle.length];
 
-    try {
-        // Tenta salvar a alteração no Firebase
-        await setDoc(doc(db, "event_statuses", eventId), { [area]: nextStatus }, { merge: true });
-        console.log(`Status de ${area} para evento ${eventId} atualizado para ${nextStatus} com sucesso.`);
-    } catch (error) {
-        // Se der erro, exibe um alerta e loga o erro no console
-        console.error("FALHA AO ATUALIZAR O FAROL:", error);
-        alert(`ERRO: Não foi possível salvar a alteração do farol.\n\nVerifique sua conexão com a internet ou as regras de segurança do Firebase.\n\nDetalhe do erro: ${error.message}`);
+        try {
+            await setDoc(doc(db, "event_statuses", eventId), { [area]: nextStatus }, { merge: true });
+        } catch (error) {
+            console.error("FALHA AO ATUALIZAR O FAROL:", error);
+            alert(`ERRO: Não foi possível salvar a alteração do farol.\n\nVerifique sua conexão com a internet ou as regras de segurança do Firebase.\n\nDetalhe do erro: ${error.message}`);
+        }
     }
-}
+    
+    // --- LÓGICA DO MODO DE EDIÇÃO ---
+    
+    function logChange(eventId, changes, description) {
+        editHistory.push({ eventId, changes, description });
+        updateEditLogUI();
+    }
 
     function updateEditLogUI() {
         const logContent = document.getElementById('edit-log-content');
@@ -664,7 +659,6 @@
     function toggleEditModeUI(isActive) {
         const toast = document.getElementById('edit-mode-toast');
         const log = document.getElementById('edit-mode-log');
-
         if (isActive) {
             toast.classList.remove('hidden', 'translate-y-20');
             log.classList.remove('hidden', 'translate-y-24');
@@ -677,63 +671,57 @@
                 log.classList.add('hidden');
             }, 300);
         }
+        rerenderAllSections();
     }
 
-    function openSashModal(eventId) {
+    function openGenericEditModal(eventId) {
         const event = allEvents.get(eventId);
         if (!event) return;
-        const modal = document.getElementById('sash-edit-modal');
-        document.getElementById('sash-select').value = event.matchType || '';
+
+        const modal = document.getElementById('generic-edit-modal');
         modal.dataset.editingEventId = eventId;
-        modal.classList.remove('hidden');
-    }
-
-    function openDateModal(eventId) {
-        const event = allEvents.get(eventId);
-        if (!event) return;
-        const modal = document.getElementById('date-edit-modal');
+        
         document.getElementById('event-name-in-modal').textContent = event.strEvent || `${event.strHomeTeam} vs ${event.strAwayTeam}`;
-        document.getElementById('date-input').value = event.effectiveDate;
-        modal.dataset.editingEventId = eventId;
+        document.getElementById('generic-date-input').value = event.customDate || event.dateEvent;
+        document.getElementById('generic-sash-select').value = event.matchType || '';
+
         modal.classList.remove('hidden');
     }
 
-    function logChange(eventId, field, oldValue, newValue, description) {
-        editHistory.push({ eventId, field, oldValue, newValue, description });
-        updateEditLogUI();
-    }
-
-    async function saveSashChange() {
-        const modal = document.getElementById('sash-edit-modal');
+    async function saveGenericChanges() {
+        const modal = document.getElementById('generic-edit-modal');
         const eventId = modal.dataset.editingEventId;
-        const newSashValue = document.getElementById('sash-select').value || null;
         if (!eventId) return;
 
         const event = allEvents.get(eventId);
-        const oldValue = event.matchType || null;
+        
+        const newDate = document.getElementById('generic-date-input').value;
+        const newSash = document.getElementById('generic-sash-select').value || null;
 
-        if (oldValue !== newSashValue) {
-            // Linha corrigida
-const eventName = event.strEvent || event.strLeague; // Usa strEvent ou recorre a strLeague
-logChange(eventId, 'matchType', oldValue, newSashValue, `Faixa de "${eventName.substring(0, 20)}..." alterada para ${newSashValue || 'Nenhuma'}.`);
-            await setDoc(doc(db, "event_statuses", eventId), { matchType: newSashValue }, { merge: true });
+        const updates = {};
+        const oldValues = {};
+        let hasChanges = false;
+        let logDescription = `Alterações em "${(event.strEvent || event.strLeague).substring(0,20)}...": `;
+        const descriptions = [];
+
+        if (newDate !== (event.customDate || event.dateEvent)) {
+            updates.customDate = newDate;
+            oldValues.customDate = event.customDate || event.dateEvent;
+            descriptions.push(`data para ${formatDateForCard(newDate)}`);
+            hasChanges = true;
         }
-        modal.classList.add('hidden');
-    }
-
-    async function saveDateChange() {
-        const modal = document.getElementById('date-edit-modal');
-        const eventId = modal.dataset.editingEventId;
-        const newDateValue = document.getElementById('date-input').value;
-        if (!eventId || !newDateValue) return;
-
-        const event = allEvents.get(eventId);
-        const oldValue = event.customDate || event.dateEvent;
-
-        if (oldValue !== newDateValue) {
-            logChange(eventId, 'customDate', oldValue, newDateValue, `Data de "${event.strEvent.substring(0, 20)}..." alterada para ${formatDateForCard(newDateValue)}.`);
-            await setDoc(doc(db, "event_statuses", eventId), { customDate: newDateValue }, { merge: true });
+        if (newSash !== (event.matchType || null)) {
+            updates.matchType = newSash;
+            oldValues.matchType = event.matchType || null;
+            descriptions.push(`faixa para ${newSash || 'Nenhuma'}`);
+            hasChanges = true;
         }
+
+        if (hasChanges) {
+            logChange(eventId, oldValues, logDescription + descriptions.join(', ') + '.');
+            await setDoc(doc(db, "event_statuses", eventId), updates, { merge: true });
+        }
+        
         modal.classList.add('hidden');
     }
 
@@ -741,106 +729,76 @@ logChange(eventId, 'matchType', oldValue, newSashValue, `Faixa de "${eventName.s
         const lastAction = editHistory.pop();
         if (!lastAction) return;
 
-        const { eventId, field, oldValue } = lastAction;
-        await setDoc(doc(db, "event_statuses", eventId), { [field]: oldValue }, { merge: true });
-        
+        const { eventId, changes } = lastAction;
+        await setDoc(doc(db, "event_statuses", eventId), changes, { merge: true });
         updateEditLogUI();
     }
-
+    
+    // Função dedicada para o toggle de visibilidade
     async function handleVisibilityToggle(eventId) {
         const event = allEvents.get(eventId);
         if (!event) return;
         const newVisibility = !event.isHidden;
+
+        logChange(
+            eventId,
+            { isHidden: event.isHidden },
+            `Visibilidade de "${(event.strEvent || event.strLeague).substring(0, 20)}..." alterada.`
+        );
+
         await setDoc(doc(db, "event_statuses", eventId), { isHidden: newVisibility }, { merge: true });
     }
 
     async function initialize() {
-        // ATUALIZAÇÃO: Aplicando a autenticação anônima
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         await signInAnonymously(auth);
-        console.log("Usuário anônimo autenticado:", auth.currentUser.uid);
-        
         db = getFirestore(app);
 
-        // --- CÓDIGO FINAL PARA O HEADER (CONTROLE PELO MOUSE) ---
+        // HEADER LOGIC
         const header = document.querySelector('header');
         const mainContent = document.getElementById('main-container');
         const headerTriggerZone = document.getElementById('header-trigger-zone');
         let hideHeaderTimeout = null;
-        
         mainContent.style.transition = 'padding-top 0.3s ease-in-out';
-
         const adjustMainContentPadding = () => {
             const headerHeight = header.offsetHeight;
-            if (header.classList.contains('header-hidden')) {
-                mainContent.style.paddingTop = '0px';
-            } else {
-                mainContent.style.paddingTop = `${headerHeight}px`;
-            }
+            mainContent.style.paddingTop = header.classList.contains('header-hidden') ? '0px' : `${headerHeight}px`;
         };
-        
         adjustMainContentPadding();
+        setTimeout(() => { header.classList.add('header-hidden'); adjustMainContentPadding(); }, 500);
+        headerTriggerZone.addEventListener('mouseenter', () => { clearTimeout(hideHeaderTimeout); header.classList.remove('header-hidden'); adjustMainContentPadding(); });
+        header.addEventListener('mouseleave', () => { hideHeaderTimeout = setTimeout(() => { header.classList.add('header-hidden'); adjustMainContentPadding(); }, 500); });
 
-        setTimeout(() => {
-            header.classList.add('header-hidden');
-            adjustMainContentPadding();
-        }, 500);
-
-        headerTriggerZone.addEventListener('mouseenter', () => {
-            clearTimeout(hideHeaderTimeout);
-            header.classList.remove('header-hidden');
-            adjustMainContentPadding();
-        });
-
-        header.addEventListener('mouseleave', () => {
-            hideHeaderTimeout = setTimeout(() => {
-                header.classList.add('header-hidden');
-                adjustMainContentPadding();
-            }, 500);
-        });
-        // --- FIM DO CÓDIGO ---
-
+        // EDIT MODE LISTENER (CTRL+K)
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.key.toLowerCase() === 'k') {
                 e.preventDefault();
                 isEditModeEnabled = !isEditModeEnabled;
                 toggleEditModeUI(isEditModeEnabled);
-                rerenderAllSections();
             }
         });
 
-        document.getElementById('top-events-container').addEventListener('click', (e) => {
+        // LISTENER DE CLIQUE COM DUPLA FUNÇÃO (VISIBILIDADE + MODAL)
+        document.getElementById('main-content').addEventListener('click', (e) => {
             if (!isEditModeEnabled) return;
+
             const visibilityToggle = e.target.closest('.visibility-toggle');
             if (visibilityToggle) {
-                e.stopPropagation();
+                e.stopPropagation(); // Previne que o modal abra junto
                 handleVisibilityToggle(visibilityToggle.dataset.eventId);
                 return;
             }
-            const editableCard = e.target.closest('.event-card[data-editable="true"]');
-            if (editableCard) {
-                openSashModal(editableCard.dataset.eventId);
+
+            const card = e.target.closest('.event-card, .event-card-match');
+            if (card && card.dataset.eventId) {
+                openGenericEditModal(card.dataset.eventId);
             }
         });
-
-        document.getElementById('top-matches-container').addEventListener('click', (e) => {
-            if (!isEditModeEnabled) return;
-            const matchCard = e.target.closest('.event-card-match');
-            if (matchCard) {
-                const event = allEvents.get(matchCard.dataset.eventId);
-                if (event && !event.isSheetEvent) {
-                    openDateModal(matchCard.dataset.eventId);
-                }
-            }
-        });
-
-        document.getElementById('save-sash-btn').addEventListener('click', saveSashChange);
-        document.getElementById('cancel-sash-btn').addEventListener('click', () => document.getElementById('sash-edit-modal').classList.add('hidden'));
-
-        document.getElementById('save-date-btn').addEventListener('click', saveDateChange);
-        document.getElementById('cancel-date-btn').addEventListener('click', () => document.getElementById('date-edit-modal').classList.add('hidden'));
         
+        // MODAL BUTTON LISTENERS
+        document.getElementById('save-generic-btn').addEventListener('click', saveGenericChanges);
+        document.getElementById('cancel-generic-btn').addEventListener('click', () => document.getElementById('generic-edit-modal').classList.add('hidden'));
         document.getElementById('undo-button').addEventListener('click', handleUndo);
 
         const cachedEvents = loadDataFromCache();
@@ -851,44 +809,18 @@ logChange(eventId, 'matchType', oldValue, newSashValue, `Faixa de "${eventName.s
         } else {
             fetchAllData();
         }
-
-        // --- CÓDIGO PARA O CARROSSEL ARRASTÁVEL ---
+        
+        // DRAG-TO-SCROLL FOR CAROUSELS
         const addDragScroll = (element) => {
             if (!element) return;
-            let isDown = false;
-            let startX;
-            let scrollLeft;
-
-            element.addEventListener('mousedown', (e) => {
-                isDown = true;
-                element.classList.add('dragging');
-                startX = e.pageX - element.offsetLeft;
-                scrollLeft = element.scrollLeft;
-            });
-
-            element.addEventListener('mouseleave', () => {
-                isDown = false;
-                element.classList.remove('dragging');
-            });
-
-            element.addEventListener('mouseup', () => {
-                isDown = false;
-                element.classList.remove('dragging');
-            });
-
-            element.addEventListener('mousemove', (e) => {
-                if (!isDown) return;
-                e.preventDefault();
-                const x = e.pageX - element.offsetLeft;
-                const walk = (x - startX) * 2; // Multiplicador para dar mais sensibilidade
-                element.scrollLeft = scrollLeft - walk;
-            });
+            let isDown = false, startX, scrollLeft;
+            element.addEventListener('mousedown', (e) => { isDown = true; element.classList.add('dragging'); startX = e.pageX - element.offsetLeft; scrollLeft = element.scrollLeft; });
+            element.addEventListener('mouseleave', () => { isDown = false; element.classList.remove('dragging'); });
+            element.addEventListener('mouseup', () => { isDown = false; element.classList.remove('dragging'); });
+            element.addEventListener('mousemove', (e) => { if (!isDown) return; e.preventDefault(); const x = e.pageX - element.offsetLeft; const walk = (x - startX) * 2; element.scrollLeft = scrollLeft - walk; });
         };
-
-        // Aplica a funcionalidade aos dois carrosséis
         addDragScroll(document.getElementById('top-events-container'));
         addDragScroll(document.getElementById('top-matches-container'));
-        // --- FIM DO CÓDIGO ---
     }
 
     document.addEventListener('DOMContentLoaded', initialize);
