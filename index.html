@@ -93,10 +93,10 @@
                 <img src="https://placehold.co/100x40/000000/FFFFFF?text=H2BET" alt="Logo H2BET" class="h-10">
             </div>
             <nav class="flex space-x-2">
-                <button class="px-4 py-2 bg-gray-700 text-white rounded-md text-sm font-medium hover:bg-gray-800 transition-colors">Home</button>
-                <button class="px-4 py-2 bg-gray-200 text-gray-600 rounded-md text-sm font-medium cursor-not-allowed">Calendar</button>
-                <button class="px-4 py-2 bg-gray-200 text-gray-600 rounded-md text-sm font-medium cursor-not-allowed">Gantt</button>
-            </nav>
+    <a href="index.html" class="px-4 py-2 bg-gray-700 text-white rounded-md text-sm font-medium hover:bg-gray-800 transition-colors">Home</a>
+    <a href="calendar.html" class="px-4 py-2 bg-gray-700 text-white rounded-md text-sm font-medium hover:bg-gray-800 transition-colors">Calendar</a>
+    <a href="gantt.html" class="px-4 py-2 bg-gray-700 text-white rounded-md text-sm font-medium hover:bg-gray-800 transition-colors">Gantt</a>
+</nav>
         </div>
     </header>
 
@@ -150,6 +150,9 @@
             </button>
         </p>
         <div id="edit-log-content" class="text-xs font-mono bg-gray-100 p-2 rounded-md">Nenhuma alteração registrada.</div>
+        <button id="clear-cache-button" class="mt-3 w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors">
+            <i class="fas fa-broom mr-2"></i>Limpar Cache e Dados
+        </button>
     </div>
 
 
@@ -220,7 +223,7 @@
     const LIBERTADORES_LEAGUE_ID = '4501';
     const CHAMPIONS_LEAGUE_ID = '4480';
     const GALO_ID = '134299';
-    const STATUS_COLORS = { red: '#ef4444', yellow: '#f59e0b', green: '#22c55e' };
+    const STATUS_COLORS = { red: '#ef4444', yellow: '#f59e0b', green: '#22c5e' };
 
     function saveDataToCache(eventsMap) {
         const cacheData = {
@@ -250,6 +253,37 @@
         }
         console.log("Cookies do domínio atual foram limpos.");
     }
+
+    // NOVA FUNÇÃO: Limpa todos os dados locais (cache, session, cookies)
+    function clearAllLocalData() {
+        console.log("Iniciando limpeza de cache, session storage e cookies...");
+
+        // 1. Deletar 'sportsDashboardCache' do localStorage (se existir)
+        localStorage.removeItem('sportsDashboardCache');
+        console.log("Item 'sportsDashboardCache' removido do localStorage.");
+
+        // 2. Limpar todo o localStorage
+        localStorage.clear();
+        console.log("localStorage completamente limpo.");
+
+        // 3. Limpar todo o sessionStorage
+        sessionStorage.clear();
+        console.log("sessionStorage completamente limpo.");
+
+        // 4. Limpar todos os cookies do domínio atual
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i];
+            const eqPos = cookie.indexOf("=");
+            const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+            document.cookie = name.trim() + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+        }
+        console.log("Cookies do domínio atual foram limpos.");
+
+        alert("Cache, Session Storage e Cookies foram limpos! A página será recarregada para aplicar as mudanças.");
+        window.location.reload(); // Recarrega a página para buscar novos dados
+    }
+
 
     function updateProgress(percentage) {
         const progressBar = document.getElementById('progress-bar');
@@ -800,6 +834,9 @@
         document.getElementById('save-generic-btn').addEventListener('click', saveGenericChanges);
         document.getElementById('cancel-generic-btn').addEventListener('click', () => document.getElementById('generic-edit-modal').classList.add('hidden'));
         document.getElementById('undo-button').addEventListener('click', handleUndo);
+        
+        // NOVO LISTENER PARA O BOTÃO DE LIMPEZA
+        document.getElementById('clear-cache-button').addEventListener('click', clearAllLocalData);
 
         const cachedEvents = loadDataFromCache();
         if (cachedEvents?.size > 0) {

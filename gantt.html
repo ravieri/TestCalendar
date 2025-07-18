@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+ <html lang="pt-br">
+ <head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>Cronograma de Eventos</title>
+     <script src="https://cdn.tailwindcss.com"></script>
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+     <style>
+         body { font-family: 'Inter', sans-serif; background-color: #f4f7fa; }
+         .gantt-grid-container {
+             display: grid;
+             grid-template-columns: 190px 1fr; /* Coluna de eventos mais estreita inicialmente */
+             border: 1px solid #e2e8f0;
+             border-radius: 0.75rem;
+             background-color: white;
+             overflow: hidden;
+         }
+         .gantt-event-list { 
+             border-right: 1px solid #e2e8f0; 
+             position: relative; /* Necessário para posicionar o resizer */
+         }
+         .gantt-timeline { overflow-x: auto; }
+         
+         .timeline-header {
+             display: flex;
+             position: sticky;
+             top: 0;
+             z-index: 20;
+             background-color: #f8fafc;
+             border-bottom: 1px solid #e2e8f0;
+             height: 30px; /* Ajustado para alinhar com o cabeçalho da lista de eventos */
+         }
+         .timeline-month-header {
+             flex-shrink: 0;
+             border-right: 1px solid #e2e8f0;
+             text-align: center;
+             font-size: 10px;
+             font-weight: 600;
+             padding: 5px 0;
+             color: #475569;
+             text-transform: capitalize;
+             box-sizing: border-box;
+         }
+         .event-list-header {
+             height: 30px; /* Reduzido para alinhar com o cabeçalho da linha do tempo */
+             padding: 5px 10px; /* Ajuste de padding para manter o texto centralizado verticalmente */
+             font-weight: 600;
+             color: #334152;
+             background-color: #f8fafc;
+             border-bottom: 1px solid #e2e8f0;
+             display: flex;
+             align-items: center;
+         }
+         .event-row {
+             position: relative;
+             height: 26px; /* Reduzido de 34px para compactar ainda mais as linhas */
+             border-bottom: 1px solid #f1f5f9;
+             display: flex;
+         }
+         .event-list-item {
+             height: 26px; /* A altura do item na lista deve corresponder à altura da linha do evento */
+             border-bottom: 1px solid #f1f5f9;
+             display: flex; /* Adicionado para alinhar conteúdo */
+             align-items: center; /* Adicionado para alinhar conteúdo verticalmente */
+             padding: 0 10px; /* Ajuste de padding */
+         }
+         .month-grid-segment {
+             height: 100%;
+             flex-shrink: 0;
+             border-right: 1px solid #e2e8f0;
+             box-sizing: border-box;
+         }
+         .event-bar-segment {
+             position: absolute;
+             height: 12px; /* Reduzido de 16px para ser mais compacto */
+             top: 50%;
+             transform: translateY(-50%);
+             border-radius: 0.25rem; /* Levemente menor para um visual compacto */
+             cursor: move;
+             z-index: 10;
+             transition: all 0.2s ease-in-out;
+             display: flex;
+             align-items: center;
+             border: 1px solid rgba(0,0,0,0.05);
+         }
+         .event-bar-segment:hover {
+             transform: translateY(-50%) scale(1.02);
+             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+         }
+         .handle { 
+             position: absolute; 
+             top: 0; 
+             width: 6px; /* Reduzido de 8px */
+             height: 100%; 
+             cursor: ew-resize; 
+             z-index: 11; 
+         } 
+         .handle-left { left: -3px; } /* Ajustado para metade do width do handle */
+         .handle-right { right: -3px; } /* Ajustado para metade do width do handle */
+ 
+         .milestone-marker {
+             position: absolute;
+             top: 50%;
+             transform: translate(-50%, -50%);
+             background-color: #1e293b;
+             color: white;
+             font-weight: 700;
+             font-size: 8px;   /* Reduzir o tamanho da fonte */
+             min-width: 14px;  /* Reduzir a largura mínima */
+             height: 14px;     /* Reduzir a altura */
+             padding: 0px;     /* Reduzir o padding, ou remover se preferir */
+             border-radius: 9999px;
+             z-index: 15;
+             box-shadow: 0 1px 3px rgba(0,0,0,0.15); /* Ajustar sombra para ser mais sutil */
+             display: flex;
+             align-items: center;
+             justify-content: center;
+         }
+         .milestone-marker.grouped {
+             background-color: #6366f1; /* Cor para marcos agrupados */
+             min-width: 18px;
+             height: 18px;
+             font-size: 10px;
+             cursor: pointer; /* Adicionar cursor para indicar interatividade */
+         }
+         .event-action-icon {
+             cursor: pointer; color: #cbd5e1; opacity: 0; transition: all 0.2s;
+             font-size: 0.8em; /* Ícones menores */
+         }
+         .event-list-item:hover .event-action-icon {
+             opacity: 1;
+         }
+         .event-action-icon:hover { color: #6366f1; transform: scale(1.1); }
+         .event-action-icon.delete:hover { color: #ef4444; }
+ 
+         #undo-btn:disabled, #toggle-history-btn:disabled { background-color: #d1d5db; cursor: not-allowed; }
+         
+         #color-palette button {
+             width: 24px; /* Reduzido */
+             height: 24px; /* Reduzido */
+             border-radius: 50%;
+             cursor: pointer;
+             transition: transform 0.2s;
+         }
+         #color-palette button:hover {
+             transform: scale(1.1);
+         }
+         #color-palette button.selected {
+             box-shadow: 0 0 0 2px white, 0 0 0 4px #4f46e5;
+         }
+         /* Estilos para o tooltip personalizado */
+         #milestone-tooltip {
+             position: absolute;
+             z-index: 50;
+             background-color: white;
+             border: 1px solid #e2e8f0;
+             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+             border-radius: 0.5rem;
+             padding: 8px 12px;
+             font-size: 0.9em;
+             color: #334152;
+             opacity: 0;
+             visibility: hidden;
+             transition: opacity 0.2s ease-in-out;
+             pointer-events: none; /* Garante que o tooltip não bloqueie eventos do mouse */
+         }
+         #milestone-tooltip h6 {
+             font-weight: bold;
+             margin-bottom: 4px;
+             color: #1e293b;
+         }
+         #milestone-tooltip ul {
+             list-style: none;
+             padding: 0;
+             margin: 0;
+         }
+         #milestone-tooltip li {
+             padding: 2px 0;
+             border-bottom: 1px solid #f1f5f9;
+             display: flex;
+             justify-content: space-between;
+             gap: 10px;
+         }
+         #milestone-tooltip li:last-child {
+             border-bottom: none;
+         }
+         #milestone-tooltip .milestone-tooltip-date {
+             font-weight: 500;
+             color: #475569;
+             flex-shrink: 0;
+         }
+         #milestone-tooltip .milestone-tooltip-label {
+             text-align: right;
+             flex-grow: 1;
+         }
+     </style>
+ </head>
+ <body class="antialiased text-gray-800">
+ 
+     <header class="bg-white/80 backdrop-blur-lg shadow-sm w-full sticky top-0 z-30">
+         <div class="w-full px-6 py-3 flex justify-between items-center">
+             <img src="https://placehold.co/100x40/000000/FFFFFF?text=H2BET" alt="Logo H2BET" class="h-10">
+             <nav class="flex space-x-2">
+                 <a href="index.html" class="px-4 py-2 bg-gray-700 text-white rounded-md text-sm font-medium hover:bg-gray-800 transition-colors">Home</a>
+                 <button class="px-4 py-2 bg-gray-200 text-gray-600 rounded-md text-sm font-medium cursor-not-allowed">Calendar</button>
+                 <a href="gantt.html" class="px-4 py-2 bg-gray-200 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors">Gantt</a>
+             </nav>
+         </div>
+     </header>
+ 
+     <main class="w-full px-6 py-6">
+         <div class="mb-4 flex items-center justify-between flex-wrap gap-2">
+             <div class="flex items-center gap-3">
+                  <button id="toggle-history-btn" class="px-3 py-2 bg-white text-gray-600 border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors flex items-center gap-2">
+                     <i class="fas fa-calendar-alt"></i> <span>Ver Histórico</span>
+                 </button>
+                  <button id="undo-btn" class="px-3 py-2 bg-white text-gray-600 border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors flex items-center gap-2" disabled>
+                     <i class="fas fa-undo"></i> Desfazer
+                 </button>
+                  <button id="add-event-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2 shadow-sm">
+                     <i class="fas fa-plus"></i> Adicionar Evento
+                 </button>
+             </div>
+         </div>
+ 
+         <div id="gantt-chart" class="gantt-grid-container shadow-lg">
+             <div class="gantt-event-list">
+                 <div class="event-list-header text-sm">Eventos</div>
+                 <div id="event-list-items"></div>
+                 <div id="resizer" style="width: 2px; cursor: ew-resize; background-color: #d1d5db; position: absolute; right: 0; top: 0; bottom: 0; z-index: 30;"></div>
+             </div>
+             <div id="gantt-timeline" class="gantt-timeline">
+                  <div id="timeline-header" class="timeline-header"></div>
+                  <div id="timeline-grid" class="relative"></div>
+             </div>
+         </div>
+     </main>
+ 
+     <div id="event-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-40">
+         <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl">
+             <h3 id="modal-title" class="text-lg font-bold mb-4">Novo Evento</h3>
+             <form id="event-form">
+                 <input type="hidden" id="event-id">
+                  <div>
+                     <label for="event-name" class="block text-sm font-medium text-gray-700">Nome do Evento</label>
+                     <input type="text" id="event-name" required class="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                 </div>
+                  <div class="md:col-span-2 mt-4">
+                      <label class="block text-sm font-medium text-gray-700">Cor do Evento</label>
+                      <div class="mt-2 relative">
+                          <button type="button" id="open-color-palette-btn" class="w-full flex items-center p-2 border border-gray-300 rounded-md shadow-sm text-left">
+                              <span id="selected-color-display" class="inline-block w-5 h-5 rounded-full mr-3 border border-gray-200"></span>
+                              <span id="selected-color-text">Selecionar Cor</span>
+                          </button>
+                          <input type="hidden" id="event-color" name="event-color">
+                          <div id="color-palette" class="hidden absolute top-full mt-1 z-50 bg-white border border-gray-200 shadow-xl rounded-md p-3 grid grid-cols-8 gap-2">
+                          </div>
+                      </div>
+                 </div>
+                 <div class="mt-4 border-t pt-4">
+                     <h4 class="text-md font-semibold text-gray-800 mb-2">Segmentos de Duração (para criar pausas)</h4>
+                     <div id="segments-container" class="space-y-3 max-h-40 overflow-y-auto pr-2"></div>
+                     <div class="mt-2 flex items-center gap-2 flex-wrap">
+    <button type="button" id="add-segment-btn" ...>...</button>
+    <span class="text-gray-400 text-sm">|</span>
+    <button type="button" data-type="oitavas" class="add-stage-btn text-sm text-gray-600 font-semibold hover:text-gray-800">Oitavas</button> <button type="button" data-type="quartas" class="add-stage-btn text-sm text-gray-600 font-semibold hover:text-gray-800">Quartas</button>
+    <button type="button" data-type="semi" class="add-stage-btn text-sm text-gray-600 font-semibold hover:text-gray-800">Semi</button>
+    <button type="button" data-type="final" class="add-stage-btn text-sm text-gray-600 font-semibold hover:text-gray-800">Final</button>
+</div>
+                 </div>
+                 <div class="mt-4 border-t pt-4">
+                     <h4 class="text-md font-semibold text-gray-800 mb-2">Marcos (Datas Importantes)</h4>
+                     <div id="milestones-container" class="space-y-2 max-h-40 overflow-y-auto pr-2"></div>
+                     <button type="button" id="add-milestone-btn" class="mt-2 text-sm text-indigo-600 font-semibold hover:text-indigo-800"><i class="fas fa-plus-circle mr-1"></i> Adicionar Marco</button>
+                 </div>
+                  <div class="mt-6 flex justify-end space-x-3">
+                     <button type="button" id="cancel-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">Cancelar</button>
+                     <button type="submit" id="save-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 shadow-sm">Salvar</button>
+                 </div>
+             </form>
+         </div>
+     </div>
+     
+     <template id="segment-template">
+         <div class="segment-row grid grid-cols-12 gap-3 items-center p-2 bg-gray-50 rounded-md">
+             <div class="col-span-4">
+                 <input type="date" class="segment-start w-full p-2 border border-gray-300 rounded-md text-sm" required>
+             </div>
+             <div class="col-span-4">
+                 <input type="date" class="segment-end w-full p-2 border border-gray-300 rounded-md text-sm" required>
+             </div>
+             <div class="col-span-3">
+                 <select class="segment-type w-full p-2 border border-gray-300 rounded-md text-sm">
+    <option value="normal">Normal</option>
+    <option value="oitavas">Oitavas de Final</option> <option value="quartas">Quartas de Final</option>
+    <option value="semi">Semifinal</option>
+    <option value="final">Final</option>
+</select>
+             </div>
+             <div class="col-span-1 text-right">
+                 <button type="button" class="remove-row-btn text-gray-400 hover:text-red-500"><i class="fas fa-trash"></i></button>
+             </div>
+         </div>
+     </template>
+     <template id="milestone-template">
+         <div class="milestone-row grid grid-cols-12 gap-2 items-center">
+             <div class="col-span-5"><input type="date" class="milestone-date w-full p-2 border border-gray-300 rounded-md text-sm" required></div>
+             <div class="col-span-5"><input type="text" placeholder="Descrição (Ex: Final)" class="milestone-label w-full p-2 border border-gray-300 rounded-md text-sm"></div>
+             <div class="col-span-2 text-right"><button type="button" class="remove-row-btn text-gray-400 hover:text-red-500"><i class="fas fa-trash"></i></button></div>
+         </div>
+     </template>
+ 
+ 
+     <script type="module">
+         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+         import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+ 
+         const firebaseConfig = {
+             apiKey: "AIzaSyB6zquSsTLCnJ_1WWQm8kb-HkpipU8PrTA",
+             authDomain: "marketing-esportivo.firebaseapp.com",
+             projectId: "marketing-esportivo",
+             storageBucket: "marketing-esportivo.appspot.com",
+             messagingSenderId: "53646634690",
+             appId: "1:53646634690:web:3e45f49d82d64601c0555b"
+         };
+ 
+         let db;
+         let events = [];
+         const DAY_WIDTH = 2.5; // Ajustado para compactar horizontalmente
+         let showHistory = false;
+         const colorMap = {
+             '#ef4444': { start: '#fca5a5', end: '#ef4444' }, '#f97316': { start: '#fdba74', end: '#f97316' }, '#f59e0b': { start: '#fcd34d', end: '#f59e0b' }, '#eab308': { start: '#fde047', end: '#eab308' }, '#84cc16': { start: '#bef264', end: '#84cc16' }, '#22c55e': { start: '#4ade80', end: '#22c55e' }, '#10b981': { start: '#34d399', end: '#10b981' }, '#14b8a6': { start: '#5eead4', end: '#14b8a6' }, '#06b6d4': { start: '#67e8f9', end: '#06b6d4' }, '#0ea5e9': { start: '#7dd3fc', end: '#0ea5e9' }, '#3b82f6': { start: '#93c5fd', end: '#3b82f6' }, '#6366f1': { start: '#a5b4fc', end: '#6366f1' }, '#8b5cf6': { start: '#c4b5fd', end: '#8b5cf6' }, '#a855f7': { start: '#d8b4fe', end: '#a855f7' }, '#d946ef': { start: '#f0abfc', end: '#d946ef' }, '#ec4899': { start: '#f9a8d4', end: '#ec4899' }, '#f43f5e': { start: '#fda4af', end: '#f43f5e' }, '#64748b': { start: '#94a3b8', end: '#64748b' }, '#78716c': { start: '#a8a29e', end: '#78716c' }, '#d6d3d1': { start: '#e7e5e4', end: '#d6d3d1' }
+         };
+         const professionalColors = Object.keys(colorMap);
+ 
+         let editHistory = [];
+         const undoBtn = document.getElementById('undo-btn');
+         const milestoneTooltip = document.createElement('div');
+         milestoneTooltip.id = 'milestone-tooltip';
+         document.body.appendChild(milestoneTooltip);
+ 
+         async function initialize() {
+             const app = initializeApp(firebaseConfig);
+             const auth = getAuth(app);
+             await signInAnonymously(auth);
+             db = getFirestore(app);
+             setupEventListeners();
+             listenToEvents();
+             migrateOldEvents(); 
+         }
+ 
+         function listenToEvents() {
+             const eventsRef = collection(db, "gantt_events_v5");
+             onSnapshot(eventsRef, (snapshot) => {
+                 events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                 render();
+             });
+         }
+         
+         async function migrateOldEvents() {
+             const oldCollectionRef = collection(db, "gantt_events_v4");
+             const snapshot = await getDocs(oldCollectionRef);
+             if (snapshot.empty) return;
+             const batch = writeBatch(db);
+             snapshot.forEach(oldDoc => {
+                 const oldData = oldDoc.data();
+                 const newDocRef = doc(db, "gantt_events_v5", oldDoc.id);
+                 const newData = { name: oldData.name, color: oldData.color, milestones: oldData.milestones || [], segments: [] };
+                 if (oldData.start && oldData.end) { newData.segments.push({ start: oldData.start, end: oldData.end, type: 'normal' }); } // Adicionado type
+                 batch.set(newDocRef, newData);
+                 batch.delete(oldDoc.ref);
+             });
+             await batch.commit();
+             console.log(`${snapshot.size} evento(s) migrados.`);
+         }
+ 
+         function render() {
+             const { minDate, maxDate } = getProjectDateRange();
+             renderTimelineHeader(minDate, maxDate);
+             renderEventList();
+             renderEventGrid(minDate, maxDate);
+         }
+ 
+        function getProjectDateRange() {
+            const today = new Date();
+            let minDate;
+
+            // Define a data inicial com base na flag 'showHistory'
+            if (showHistory) {
+                minDate = new Date(today.getFullYear() - 1, 0, 1); // Início do ano anterior
+            } else {
+                minDate = new Date(today.getFullYear(), today.getMonth(), 1); // Início do mês atual
+            }
+
+            // Define uma data máxima padrão (final do próximo ano)
+            let potentialMaxDate = new Date(today.getFullYear() + 1, 11, 31);
+
+            // Itera sobre todos os eventos para encontrar a data mais recente
+            if (events && events.length > 0) {
+                events.forEach(event => {
+                    // Verifica as datas finais dos segmentos
+                    if (event.segments) {
+                        event.segments.forEach(segment => {
+                            if (segment.end) {
+                                const segmentEndDate = new Date(segment.end + 'T00:00:00');
+                                if (segmentEndDate > potentialMaxDate) {
+                                    potentialMaxDate = segmentEndDate;
+                                }
+                            }
+                        });
+                    }
+                    // Verifica as datas dos marcos
+                    if (event.milestones) {
+                        event.milestones.forEach(milestone => {
+                            if (milestone.date) {
+                                const milestoneDate = new Date(milestone.date + 'T00:00:00');
+                                if (milestoneDate > potentialMaxDate) {
+                                    potentialMaxDate = milestoneDate;
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Ajusta a data máxima final para ser o final do ano da data mais recente encontrada
+            const maxDate = new Date(potentialMaxDate.getFullYear(), 11, 31);
+
+            return { minDate, maxDate };
+        }
+ 
+         function renderTimelineHeader(minDate, maxDate) {
+             const headerEl = document.getElementById('timeline-header'); headerEl.innerHTML = '';
+             let currentDate = new Date(minDate);
+             while(currentDate <= maxDate) {
+                 const monthEl = document.createElement('div');
+                 const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+                 monthEl.className = 'timeline-month-header';
+                 monthEl.style.width = `${daysInMonth * DAY_WIDTH}px`;
+                 monthEl.textContent = `${currentDate.toLocaleString('pt-BR', { month: 'short' })}`;
+                 headerEl.appendChild(monthEl);
+                 currentDate.setMonth(currentDate.getMonth() + 1);
+             }
+         }
+         
+         function renderEventList() {
+             const listEl = document.getElementById('event-list-items');
+             listEl.innerHTML = events.map(event => `
+                 <div class="event-list-item flex items-center justify-between p-3" data-event-id="${event.id}">
+                     <p class="text-sm font-medium truncate">${event.name}</p>
+                     <div class="flex items-center gap-3">
+                         <i class="fas fa-pencil-alt event-action-icon edit" title="Editar Evento"></i>
+                         <i class="fas fa-trash-alt event-action-icon delete" title="Excluir Evento"></i>
+                     </div>
+                 </div>
+             `).join('');
+             document.querySelectorAll('.event-action-icon.edit').forEach(el => el.addEventListener('click', (e) => openModal(events.find(ev => ev.id === e.target.closest('.event-list-item').dataset.eventId))));
+             document.querySelectorAll('.event-action-icon.delete').forEach(el => el.addEventListener('click', (e) => deleteEvent(e.target.closest('.event-list-item').dataset.eventId)));
+         }
+ 
+         function renderEventGrid(minDate, maxDate) {
+             const gridEl = document.getElementById('timeline-grid'); gridEl.innerHTML = '';
+             
+             events.forEach(event => {
+                 const row = document.createElement('div'); 
+                 row.className = 'event-row';
+                 
+                 // Desenha as caixas dos meses para garantir o alinhamento
+                 let currentDate = new Date(minDate);
+                 while(currentDate <= maxDate) {
+                     const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+                     const monthSegment = document.createElement('div');
+                     monthSegment.className = 'month-grid-segment';
+                     monthSegment.style.width = `${daysInMonth * DAY_WIDTH}px`;
+                     
+                     // Desenha as linhas de semana dentro de cada mês
+                     const weeklyLineGradient = `repeating-linear-gradient(to right, transparent, transparent ${DAY_WIDTH * 7 - 1}px, #f1f5f9 ${DAY_WIDTH * 7 -1}px, #f1f5f9 ${DAY_WIDTH * 7}px)`;
+                     monthSegment.style.backgroundImage = weeklyLineGradient;
+ 
+                     row.appendChild(monthSegment);
+                     currentDate.setMonth(currentDate.getMonth() + 1);
+                 }
+ 
+                 // Adiciona barras e marcos sobre o grid já desenhado
+                 if (event.segments) {
+                     event.segments.forEach((segment, index) => {
+                         const bar = createDraggableBar(event, segment, index, minDate);
+                         row.appendChild(bar);
+                     });
+                 }
+ 
+                 // Lógica de agrupamento de marcos
+                 if (event.milestones && event.milestones.length > 0) {
+                     const groupedMilestones = groupMilestones(event.milestones);
+                     groupedMilestones.forEach(group => {
+                         const marker = createMilestoneMarker(group, minDate);
+                         row.appendChild(marker);
+                     });
+                 }
+                 gridEl.appendChild(row);
+             });
+         }
+         
+         function groupMilestones(milestones) {
+             if (!milestones || milestones.length === 0) return [];
+ 
+             const sortedMilestones = [...milestones].sort((a, b) => new Date(a.date) - new Date(b.date));
+             const grouped = [];
+             const MILSTONE_GROUP_THRESHOLD_DAYS = 3; 
+ 
+             let currentGroup = [];
+ 
+             sortedMilestones.forEach((milestone, index) => {
+                 const milestoneDate = new Date(milestone.date + 'T00:00:00'); 
+ 
+                 if (currentGroup.length === 0) {
+                     currentGroup.push(milestone);
+                 } else {
+                     const lastMilestoneInGroupDate = new Date(currentGroup[currentGroup.length - 1].date + 'T00:00:00');
+                     const diffTime = Math.abs(milestoneDate - lastMilestoneInGroupDate);
+                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+ 
+                     if (diffDays <= MILSTONE_GROUP_THRESHOLD_DAYS) {
+                         currentGroup.push(milestone);
+                     } else {
+                         grouped.push(currentGroup);
+                         currentGroup = [milestone];
+                     }
+                 }
+ 
+                 if (index === sortedMilestones.length - 1) {
+                     grouped.push(currentGroup);
+                 }
+             });
+ 
+             return grouped.map(group => {
+                 if (group.length === 1) {
+                     return {
+                         date: group[0].date,
+                         label: group[0].label,
+                         count: 1,
+                         isGrouped: false,
+                         allMilestones: [group[0]]
+                     };
+                 } else {
+                     const startDate = new Date(group[0].date);
+                     const endDate = new Date(group[group.length - 1].date);
+                     
+                     let tooltipContent = `<h6>Eventos Agrupados (${group.length})</h6><ul>`;
+                     group.forEach(m => {
+                         const milestoneDate = new Date(m.date);
+                         tooltipContent += `<li><span class="milestone-tooltip-date">${milestoneDate.toLocaleDateString('pt-BR')}</span> <span class="milestone-tooltip-label">${m.label || 'Sem descrição'}</span></li>`;
+                     });
+                     tooltipContent += '</ul>';
+                     
+                     return {
+                         date: group[0].date, 
+                         label: tooltipContent,
+                         count: group.length,
+                         isGrouped: true,
+                         allMilestones: group
+                     };
+                 }
+             });
+         }
+ 
+        // NOVA FUNÇÃO: Utilitário para escurecer cores
+        function darkenColor(hex, percent) {
+            hex = hex.replace('#', '');
+            let r = parseInt(hex.substring(0, 2), 16);
+            let g = parseInt(hex.substring(2, 4), 16);
+            let b = parseInt(hex.substring(4, 6), 16);
+
+            r = parseInt(r * (100 - percent) / 100);
+            g = parseInt(g * (100 - percent) / 100);
+            b = parseInt(b * (100 - percent) / 100);
+
+            r = (r < 255) ? r : 255;  
+            g = (g < 255) ? g : 255;  
+            b = (b < 255) ? b : 255;  
+
+            const newHex = "#" + [r, g, b].map(x => {
+                const hex = x.toString(16);
+                return hex.length === 1 ? '0' + hex : hex;
+            }).join('');
+
+            return newHex;
+        }
+
+        // FUNÇÃO ATUALIZADA: `createDraggableBar` com lógica de cor por fase
+        function createDraggableBar(event, segment, segmentIndex, minDate) {
+            const start = new Date(segment.start + 'T00:00:00'); 
+            const end = new Date(segment.end + 'T00:00:00');
+            if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) return document.createDocumentFragment();
+            
+            const durationDays = (end - start) / (1000 * 60 * 60 * 24) + 1;
+            const offsetDays = (start - minDate) / (1000 * 60 * 60 * 24);
+            
+            const bar = document.createElement('div');
+            bar.className = 'event-bar-segment';
+            bar.style.left = `${offsetDays * DAY_WIDTH}px`;
+            bar.style.width = `${durationDays * DAY_WIDTH}px`;
+            
+            const chosenColor = event.color || '#a3e635';
+            const gradientInfo = colorMap[chosenColor] || {start: chosenColor, end: chosenColor};
+
+            // --- A NOVA LÓGICA DE COR ---
+            switch (segment.type) {
+                case 'quartas':
+                    // Usa a cor final do gradiente, que já é mais forte
+                    bar.style.background = gradientInfo.end;
+                    break;
+                case 'semi':
+                    // Pega a cor final e a escurece em 20%
+                    bar.style.background = darkenColor(gradientInfo.end, 20);
+                    break;
+                case 'final':
+                    // Pega a cor final e a escurece em 40% para o máximo destaque
+                    bar.style.background = darkenColor(gradientInfo.end, 40);
+                    bar.style.border = `1px solid ${darkenColor(gradientInfo.end, 50)}`;
+                    break;
+                case 'normal':
+                default:
+                    // Comportamento padrão com o gradiente
+                    bar.style.background = `linear-gradient(to right, ${gradientInfo.start}, ${gradientInfo.end})`;
+                    break;
+            }
+            
+            bar.innerHTML = `<div class="handle handle-left"></div><div class="handle handle-right"></div>`;
+            addBarInteractivity(bar, event, segmentIndex, minDate);
+            return bar;
+        }
+ 
+         function createMilestoneMarker(milestoneGroup, minDate) {
+             const markerDate = new Date(milestoneGroup.date + 'T00:00:00');
+             if(isNaN(markerDate.getTime())) return document.createDocumentFragment();
+             
+             const markerOffsetDays = (markerDate - minDate) / (1000 * 60 * 60 * 24);
+             const marker = document.createElement('div'); 
+             marker.className = 'milestone-marker';
+ 
+             if (milestoneGroup.isGrouped) {
+                 marker.classList.add('grouped');
+                 marker.textContent = milestoneGroup.count; 
+                 marker.dataset.tooltipContent = milestoneGroup.label; 
+             } else {
+                 marker.textContent = markerDate.getDate();
+                 marker.title = milestoneGroup.label || `Marco em ${markerDate.toLocaleDateString('pt-BR')}`;
+             }
+ 
+             marker.style.left = `${(markerOffsetDays + 0.5) * DAY_WIDTH}px`;
+             
+             return marker;
+         }
+ 
+         function addBarInteractivity(bar, event, segmentIndex, minDate) {
+              let isDragging = false, isResizingLeft = false, isResizingRight = false;
+              let startX, initialLeft, initialWidth;
+              const eventBeforeChange = JSON.parse(JSON.stringify(event));
+             bar.addEventListener('mousedown', e => {
+                 e.stopPropagation();
+                 if (e.target.classList.contains('handle-left')) isResizingLeft = true;
+                 else if (e.target.classList.contains('handle-right')) isResizingRight = true;
+                 else isDragging = true;
+                 startX = e.pageX; initialLeft = bar.offsetLeft; initialWidth = bar.offsetWidth; bar.style.zIndex = 20;
+             });
+             document.addEventListener('mousemove', e => {
+                 if (!isDragging && !isResizingLeft && !isResizingRight) return;
+                 const dx = e.pageX - startX;
+                 if(isDragging) bar.style.left = `${initialLeft + dx}px`;
+                 else if(isResizingRight) bar.style.width = `${initialWidth + dx}px`;
+                 else if(isResizingLeft) {
+                     bar.style.left = `${initialLeft + dx}px`;
+                     bar.style.width = `${initialWidth - dx}px`;
+                 }
+             });
+             document.addEventListener('mouseup', async () => {
+                  if (!isDragging && !isResizingLeft && !isResizingRight) return;
+                  bar.style.zIndex = 10;
+                  const newLeft = bar.offsetLeft; const newWidth = bar.offsetWidth;
+                  const newStartOffsetDays = newLeft / DAY_WIDTH; const newDurationDays = newWidth / DAY_WIDTH;
+                  const newStartDate = new Date(minDate); newStartDate.setDate(minDate.getDate() + Math.round(newStartOffsetDays));
+                  const newEndDate = new Date(newStartDate); newEndDate.setDate(newStartDate.getDate() + Math.max(0, Math.round(newDurationDays - 1)));
+                  const updatedEvent = JSON.parse(JSON.stringify(event));
+                  updatedEvent.segments[segmentIndex] = { 
+                      start: newStartDate.toISOString().split('T')[0], 
+                      end: newEndDate.toISOString().split('T')[0],
+                      type: updatedEvent.segments[segmentIndex].type || 'normal' // Preserva o tipo
+                    };
+                  await updateEvent(event.id, updatedEvent, eventBeforeChange);
+                  isDragging = isResizingLeft = isResizingRight = false;
+             });
+         }
+         function openModal(event = null) {
+             const modal = document.getElementById('event-modal'); const form = document.getElementById('event-form');
+             form.reset();
+             document.getElementById('segments-container').innerHTML = ''; document.getElementById('milestones-container').innerHTML = '';
+             const colorInput = modal.querySelector('#event-color'); const colorDisplay = modal.querySelector('#selected-color-display');
+             if (event) {
+                 modal.querySelector('#modal-title').textContent = 'Editar Evento';
+                 modal.querySelector('#event-id').value = event.id;
+                 modal.querySelector('#event-name').value = event.name;
+                 const eventColor = event.color || professionalColors[4]; 
+                 colorInput.value = eventColor; colorDisplay.style.backgroundColor = eventColor;
+                 if (event.segments) event.segments.forEach(addSegmentRow);
+                 if (event.milestones) event.milestones.forEach(addMilestoneRow);
+             } else {
+                 modal.querySelector('#modal-title').textContent = 'Novo Evento';
+                 modal.querySelector('#event-id').value = '';
+                 const defaultColor = professionalColors[4];
+                 colorInput.value = defaultColor; colorDisplay.style.backgroundColor = defaultColor;
+                 addSegmentRow(); 
+             }
+             modal.classList.remove('hidden');
+         }
+         function closeModal() { document.getElementById('event-modal').classList.add('hidden'); }
+         
+         // FUNÇÃO ATUALIZADA: `addSegmentRow` para aceitar um tipo
+         function addSegmentRow(segment = {start: '', end: '', type: 'normal'}) {
+            const template = document.getElementById('segment-template');
+            const container = document.getElementById('segments-container');
+            const clone = template.content.cloneNode(true);
+            
+            clone.querySelector('.segment-start').value = segment.start;
+            clone.querySelector('.segment-end').value = segment.end;
+            clone.querySelector('.segment-type').value = segment.type || 'normal'; 
+            
+            clone.querySelector('.remove-row-btn').onclick = (e) => e.target.closest('.segment-row').remove();
+            container.appendChild(clone);
+        }
+
+         function addMilestoneRow(milestone = { date: '', label: '' }) {
+             const template = document.getElementById('milestone-template'); const container = document.getElementById('milestones-container');
+             const clone = template.content.cloneNode(true);
+             clone.querySelector('.milestone-date').value = milestone.date; clone.querySelector('.milestone-label').value = milestone.label;
+             clone.querySelector('.remove-row-btn').onclick = (e) => e.target.closest('.milestone-row').remove();
+             container.appendChild(clone);
+         }
+
+         // FUNÇÃO ATUALIZADA: `handleFormSubmit` para salvar o tipo de fase
+         async function handleFormSubmit(e) {
+             e.preventDefault();
+             const id = document.getElementById('event-id').value;
+             const segments = [];
+             document.querySelectorAll('.segment-row').forEach(row => {
+                 const start = row.querySelector('.segment-start').value;
+                 const end = row.querySelector('.segment-end').value;
+                 const type = row.querySelector('.segment-type').value; 
+                 if(start && end) segments.push({ start, end, type });
+             });
+             const milestones = [];
+             document.querySelectorAll('.milestone-row').forEach(row => {
+                 const date = row.querySelector('.milestone-date').value;
+                 const label = row.querySelector('.milestone-label').value;
+                 if(date) milestones.push({ date, label });
+             });
+             const eventData = {
+                 name: document.getElementById('event-name').value,
+                 color: document.getElementById('event-color').value,
+                 segments: segments.sort((a,b) => new Date(a.start) - new Date(b.start)),
+                 milestones: milestones.sort((a,b) => new Date(a.date) - new Date(b.date)),
+             };
+             if (id) {
+                 const eventBeforeChange = { ...events.find(ev => ev.id === id) };
+                 await updateEvent(id, eventData, eventBeforeChange);
+             } else { await createEvent(eventData); }
+             closeModal();
+         }
+         function logChange(actionType, data) {
+             editHistory.push({ actionType, data });
+             updateUndoButton();
+         }
+         function updateUndoButton() { undoBtn.disabled = editHistory.length === 0; }
+         async function handleUndo() {
+             if (editHistory.length === 0) return;
+             const lastAction = editHistory.pop();
+             const batch = writeBatch(db);
+             switch (lastAction.actionType) {
+                 case 'create': batch.delete(doc(db, "gantt_events_v5", lastAction.data.id)); break;
+                 case 'update': batch.set(doc(db, "gantt_events_v5", lastAction.data.id), lastAction.data); break;
+                 case 'delete': batch.set(doc(db, "gantt_events_v5", lastAction.data.id), lastAction.data); break;
+             }
+             await batch.commit();
+             updateUndoButton();
+         }
+         async function createEvent(data) {
+             const newDocRef = doc(collection(db, "gantt_events_v5"));
+             await setDoc(newDocRef, data);
+             logChange('create', { ...data, id: newDocRef.id });
+         }
+         async function updateEvent(id, newData, oldData) {
+             logChange('update', oldData);
+             await setDoc(doc(db, "gantt_events_v5", id), newData, { merge: true });
+         }
+         async function deleteEvent(id) {
+             if(confirm('Tem certeza que deseja excluir este evento?')) {
+                 const eventToDelete = { ...events.find(e => e.id === id) };
+                 logChange('delete', eventToDelete);
+                 await deleteDoc(doc(db, "gantt_events_v5", id));
+             }
+         }
+         function setupEventListeners() {
+             document.getElementById('add-event-btn').addEventListener('click', () => openModal());
+             document.getElementById('cancel-btn').addEventListener('click', closeModal);
+             document.getElementById('event-form').addEventListener('submit', handleFormSubmit);
+
+             // ATUALIZAÇÃO: Event listeners para os botões de atalho
+             document.getElementById('add-segment-btn').addEventListener('click', () => addSegmentRow());
+             document.querySelectorAll('.add-stage-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const type = e.currentTarget.dataset.type;
+                    addSegmentRow({ start: '', end: '', type: type });
+                });
+            });
+
+             document.getElementById('add-milestone-btn').addEventListener('click', () => addMilestoneRow());
+             document.getElementById('undo-btn').addEventListener('click', handleUndo);
+             document.getElementById('toggle-history-btn').addEventListener('click', () => {
+                 showHistory = !showHistory;
+                 const btn = document.getElementById('toggle-history-btn');
+                 btn.querySelector('span').textContent = showHistory ? 'Ocultar Histórico' : 'Ver Histórico';
+                 render();
+             });
+             const openPaletteBtn = document.getElementById('open-color-palette-btn');
+             const colorPalette = document.getElementById('color-palette');
+             const colorInput = document.getElementById('event-color');
+             const colorDisplay = document.getElementById('selected-color-display');
+             colorPalette.innerHTML = professionalColors.map(color => `<button type="button" style="background-color: ${color};" data-color="${color}"></button>`).join('');
+             openPaletteBtn.addEventListener('click', (e) => {
+                 e.stopPropagation();
+                 colorPalette.classList.toggle('hidden');
+             });
+             colorPalette.addEventListener('click', (e) => {
+                 if (e.target.tagName === 'BUTTON') {
+                     const selectedColor = e.target.dataset.color;
+                     colorInput.value = selectedColor;
+                     colorDisplay.style.backgroundColor = selectedColor;
+                     colorPalette.classList.add('hidden');
+                 }
+             });
+             document.addEventListener('click', (e) => {
+                 if (!colorPalette.classList.contains('hidden') && !e.target.closest('#open-color-palette-btn')) {
+                     colorPalette.classList.add('hidden');
+                 }
+             });
+ 
+             document.getElementById('gantt-timeline').addEventListener('mouseover', (e) => {
+                 const marker = e.target.closest('.milestone-marker.grouped');
+                 if (marker && marker.dataset.tooltipContent) {
+                     milestoneTooltip.innerHTML = marker.dataset.tooltipContent;
+                     milestoneTooltip.style.opacity = '1';
+                     milestoneTooltip.style.visibility = 'visible';
+ 
+                     const markerRect = marker.getBoundingClientRect();
+                     const timelineRect = document.getElementById('gantt-timeline').getBoundingClientRect();
+                     const tooltipWidth = milestoneTooltip.offsetWidth;
+                     const tooltipHeight = milestoneTooltip.offsetHeight;
+ 
+                     let top = markerRect.top - timelineRect.top - tooltipHeight - 10;
+                     let left = markerRect.left - timelineRect.left + (markerRect.width / 2) - (tooltipWidth / 2);
+ 
+                     if (left < 0) { left = 0; }
+                     if (left + tooltipWidth > timelineRect.width) { left = timelineRect.width - tooltipWidth; }
+                     if (top < 0) { top = markerRect.bottom - timelineRect.top + 10; }
+ 
+                     milestoneTooltip.style.left = `${left + document.getElementById('gantt-timeline').scrollLeft}px`;
+                     milestoneTooltip.style.top = `${top}px`;
+                 }
+             });
+ 
+             document.getElementById('gantt-timeline').addEventListener('mouseout', (e) => {
+                 if (e.target.closest('.milestone-marker.grouped')) {
+                     milestoneTooltip.style.opacity = '0';
+                     milestoneTooltip.style.visibility = 'hidden';
+                 }
+             });
+         }
+ 
+         function setupResizer() {
+             const resizer = document.getElementById('resizer');
+             const ganttGrid = document.getElementById('gantt-chart');
+             const eventList = document.querySelector('.gantt-event-list');
+ 
+             let isResizing = false;
+ 
+             resizer.addEventListener('mousedown', (e) => {
+                 isResizing = true;
+                 document.body.style.cursor = 'ew-resize';
+                 eventList.style.userSelect = 'none';
+             });
+ 
+             document.addEventListener('mousemove', (e) => {
+                 if (!isResizing) return;
+ 
+                 const newWidth = e.clientX - eventList.getBoundingClientRect().left;
+                 const minWidth = 100;
+                 const maxWidth = ganttGrid.offsetWidth * 0.5;
+ 
+                 if (newWidth >= minWidth && newWidth <= maxWidth) {
+                     ganttGrid.style.gridTemplateColumns = `${newWidth}px 1fr`;
+                 }
+             });
+ 
+             document.addEventListener('mouseup', () => {
+                 isResizing = false;
+                 document.body.style.cursor = 'default';
+                 eventList.style.userSelect = '';
+             });
+         }
+ 
+         document.addEventListener('DOMContentLoaded', () => {
+             initialize();
+             setupResizer();
+         });
+     </script>
+ </body>
+ </html>
