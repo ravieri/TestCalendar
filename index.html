@@ -520,7 +520,7 @@
     function renderTopEvents(events) {
         const container = document.getElementById('top-events-container');
         container.innerHTML = '';
-        let eventsToRender = events.filter(event => event.isSheetEvent);
+        let eventsToRender = events.filter(event => event.isSheetEvent).slice(0, 20);
 
         if (eventsToRender.length === 0) {
             container.innerHTML = '<p class="text-gray-500">Nenhum evento cadastrado no Sheets.</p>';
