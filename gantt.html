@@ -76,16 +76,17 @@
          }
          .event-bar-segment {
              position: absolute;
-             height: 12px; /* Reduzido de 16px para ser mais compacto */
-             top: 50%;
-             transform: translateY(-50%);
-             border-radius: 0.25rem; /* Levemente menor para um visual compacto */
+             height: 100%;           /* ALTERADO: Para ocupar 100% da altura da linha. */
+             top: 0;                 /* ALTERADO: Alinha a barra no topo da linha. */
+             transform: none;        /* ALTERADO: Remove o deslocamento vertical. */
+             border-radius: 0;       /* OPCIONAL: Remove as bordas arredondadas para um preenchimento perfeito. */
              cursor: move;
              z-index: 10;
              transition: all 0.2s ease-in-out;
              display: flex;
              align-items: center;
-             border: 1px solid rgba(0,0,0,0.05);
+             /* A borda lateral pode ser mantida ou removida, como preferir */
+             border: 1px solid rgba(0,0,0,0.05); 
          }
          .event-bar-segment:hover {
              transform: translateY(-50%) scale(1.02);
