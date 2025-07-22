@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendário de Jogos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        
+        .header-hidden { transform: translateY(-100%); }
+        #header-trigger-zone { position: fixed; top: 0; left: 0; width: 100%; height: 5px; z-index: 100; }
+
+        #month-view-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+        /* ALTERADO: Altura mínima de cada dia reduzida para compactar a visão mensal */
+        .calendar-day { border: 1px solid #e2e8f0; background-color: #fff; min-height: 92px; padding: 4px; display: flex; flex-direction: column; }
+        .games-container { flex-grow: 1; }
+        .calendar-day.today { border-color: #4f46e5; background-color: #eef2ff; }
+        /* ALTERADO: Tamanho da fonte dos números do dia ligeiramente reduzido */
+        .day-number { font-weight: 600; color: #374151; margin-bottom: 2px; font-size: 0.7rem; }
+        .today .day-number { color: #4f46e5; }
+        .calendar-day.not-current-month { background-color: #f9fafb; pointer-events: none; }
+        .calendar-day.not-current-month .day-number { color: #d1d5db; }
+        /* ALTERADO: Tamanho da fonte do botão "ver mais" reduzido */
+        .toggle-games-btn { cursor: pointer; width: 100%; text-align: center; margin-top: auto; padding: 2px 1px; border-radius: 4px; font-weight: 600; font-size: 0.65rem; }
+        .toggle-games-btn.is-expanded { color: #c2410c; }
+        .toggle-games-btn.is-expanded:hover { background-color: #fff7ed; }
+        .toggle-games-btn:not(.is-expanded) { color: #4f46e5; }
+        .toggle-games-btn:not(.is-expanded):hover { background-color: #eef2ff; }
+
+        #week-view-grid { display: grid; grid-template-columns: repeat(7, 1fr); border-left: 1px solid #e2e8f0; }
+        .week-day-column { border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
+        .week-day-column:first-child { border-top-left-radius: 0.5rem; }
+        .week-day-column:last-child { border-top-right-radius: 0.5rem; }
+        .week-day-header { padding: 4px; background-color: #f9fafb; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
+        .week-day-header.today { background-color: #eef2ff; }
+        .week-day-header.today .day-num { background-color: #4f46e5; color: white; }
+        
+        .view-btn { background-color: white; color: #374151; border: 1px solid #d1d5db; transition: all 0.2s; }
+        .view-btn.active-view { background-color: #4f46e5; color: white; border-color: #4f46e5; z-index: 10; }
+    </style>
+</head>
+<body class="antialiased text-gray-800">
+    <div id="header-trigger-zone"></div>
+
+    <div id="page-loader" class="fixed inset-0 bg-gray-100 z-50 flex flex-col items-center justify-center">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-500"></div>
+        <p class="mt-4 text-lg text-gray-600">A carregar calendário...</p>
+    </div>
+
+    <header class="bg-white shadow-md fixed w-full top-0 z-30 transition-transform duration-300 ease-in-out">
+        <div class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <img src="https://placehold.co/100x40/000000/FFFFFF?text=H2BET" alt="Logo H2BET" class="h-10">
+            <nav class="flex space-x-2">
+                <a href="index.html" class="px-4 py-2 bg-gray-200 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors">Home</a>
+                <a href="calendario.html" class="px-4 py-2 bg-gray-700 text-white rounded-md text-sm font-medium hover:bg-gray-800 transition-colors">Calendário</a>
+                <a href="gantt.html" class="px-4 py-2 bg-gray-200 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors">Gantt</a>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main-container" class="container mx-auto px-6 py-3" style="padding-top: 0px;">
+        <div id="view-controls" class="relative flex justify-center items-center mb-2 h-9">
+            <div class="flex items-center justify-center gap-3">
+                <button id="prev-btn" class="p-2 w-8 h-8 flex items-center justify-center bg-white border border-gray-300 rounded-full hover:bg-gray-100 transition-colors"><i class="fas fa-chevron-left text-xs"></i></button>
+                <h2 id="view-title" class="text-lg font-bold text-gray-800 text-center" style="min-width: 170px;"></h2>
+                <button id="next-btn" class="p-2 w-8 h-8 flex items-center justify-center bg-white border border-gray-300 rounded-full hover:bg-gray-100 transition-colors"><i class="fas fa-chevron-right text-xs"></i></button>
+            </div>
+
+            <div id="view-switcher" class="absolute right-0 top-1/2 -translate-y-1/2 flex rounded-md" role="group">
+                <button type="button" data-view="day" class="view-btn px-3 py-1.5 text-xs font-medium rounded-l-lg hover:bg-gray-100 focus:z-10 focus:ring-2 focus:ring-indigo-500">Dia</button>
+                <button type="button" data-view="week" class="view-btn px-3 py-1.5 text-xs font-medium border-t border-b hover:bg-gray-100 focus:z-10 focus:ring-2 focus:ring-indigo-500 active-view">Semana</button>
+                <button type="button" data-view="month" class="view-btn px-3 py-1.5 text-xs font-medium rounded-r-lg hover:bg-gray-100 focus:z-10 focus:ring-2 focus:ring-indigo-500 ">Mês</button>
+            </div>
+        </div>
+        
+        <div id="page-content" class="hidden">
+            <div id="month-view-container">
+                <div id="weekday-headers" class="grid grid-cols-7 gap-2 mb-1 text-center text-xs font-semibold text-gray-500">
+                    <div>Dom</div> <div>Seg</div> <div>Ter</div> <div>Qua</div> <div>Qui</div> <div>Sex</div> <div>Sáb</div>
+                </div>
+                <div id="month-view-grid"></div>
+            </div>
+
+            <div id="week-view-container" class="hidden bg-white rounded-lg shadow">
+                <div id="week-view-grid"></div>
+            </div>
+
+            <div id="day-view-container" class="hidden bg-white rounded-lg shadow p-6">
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyB6zquSsTLCnJ_1WWQm8kb-HkpipU8PrTA",
+        authDomain: "marketing-esportivo.firebaseapp.com",
+        projectId: "marketing-esportivo",
+        storageBucket: "marketing-esportivo.appspot.com",
+        messagingSenderId: "53646634690",
+        appId: "1:53646634690:web:3e45f49d82d64601c0555b"
+    };
+
+    const API_KEY = '373862';
+    const BASE_URL = `https://www.thesportsdb.com/api/v1/json/${API_KEY}`;
+
+    let db;
+    let allEvents = new Map();
+    let currentDate = new Date();
+    let currentView = 'week';
+    let expandedDayId = null; 
+    
+    const TEAM_LEVELS = { '134465': 5, '134287': 5, '133729': 5, '133739': 5, '133613': 5, '133614': 5, '133668': 5, '133693': 5, '133692': 5, '133689': 5, '133702': 5, '133604': 5, '133612': 5, '133610': 5, '133732': 5, '133667': 5, '134299': 4, '134291': 4, '134284': 4, '134296': 4, '134288': 4, '134281': 4, '133616': 4, '134777': 4, '133671': 4, '133700': 4, '133699': 4, '133695': 4, '133734': 4, '133698': 4, '133696': 4, '133601': 4, '133619': 4, '133690': 4, '134282': 3, '134294': 3, '134286': 3, '134293': 3, '134285': 3, '136186': 3, '133736': 3, '133731': 3, '133735': 3, '133728': 3, '133737': 3, '133694': 3, '133701': 3, '134280': 2, '134744': 2, '134736': 2, '135887': 2, '133636': 2 };
+    const MAIN_LEAGUE_IDS = ['4351', '4331', '4335', '4328', '4480', '4501', '4443', '4724'];
+    const FOOTBALL_TEAM_IDS = Object.keys(TEAM_LEVELS);
+    const UFC_LEAGUE_ID = '4443';
+    const SUDAMERICANA_LEAGUE_ID = '4724';
+    const LIBERTADORES_LEAGUE_ID = '4501';
+    const CHAMPIONS_LEAGUE_ID = '4480';
+    const MONTH_GAMES_LIMIT = 3; // Reduzido para caber melhor no novo layout
+
+    function processAndAddEvent(event) {
+        if (!event || !event.idEvent || allEvents.has(event.idEvent)) return;
+        
+        event.effectiveDate = event.customDate || event.dateEvent;
+        if (event.isSheetEvent) { 
+            event.importanceScore = 10; 
+        } else {
+            const homeLevel = TEAM_LEVELS[event.idHomeTeam] || 1;
+            const awayLevel = TEAM_LEVELS[event.idAwayTeam] || 1;
+            event.importanceScore = homeLevel + awayLevel;
+            if (!event.matchType) {
+                const leagueNameLower = (event.strLeague || '').toLowerCase();
+                const roundNameLower = (event.intRound || '').toString().toLowerCase();
+                if (['final', 'cup final', 'world cup', 'decisão'].some(k => leagueNameLower.includes(k) || roundNameLower.includes(k))) event.matchType = 'FINAL';
+                else if (['semi-final', 'semifinal'].some(k => leagueNameLower.includes(k) || roundNameLower.includes(k))) event.matchType = 'SEMI_FINAL';
+                else if (['quarter-final', 'quarterfinal', 'quartas de final'].some(k => leagueNameLower.includes(k) || roundNameLower.includes(k))) event.matchType = 'QUARTAS_FINAL';
+            }
+        }
+        allEvents.set(event.idEvent, event);
+    }
+    
+    async function fetchSheetData() {
+        const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3rhQxYb78wgVMUssOAdfdaAA8x8jULNsw3PHhhg1vrjPYdfzEKR18DL-o9Z1KJEfyOs4zekgBkQb6/pub?gid=0&single=true&output=csv';
+        try {
+            const response = await fetch(sheetUrl);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const csvText = await response.text();
+            csvText.split(/\r?\n/).slice(1).forEach(row => {
+                const columns = row.split(',').map(c => c.trim());
+                if (columns.length < 5 || !columns[0]) return;
+                const [id, name, logo, date, sashType] = columns;
+                const dateParts = date.split('/');
+                if (dateParts.length !== 3) return;
+                const formattedDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+                processAndAddEvent({
+                    idEvent: `sheet_${id}`, strLeague: name, logoUrl: logo, dateEvent: formattedDate,
+                    matchType: sashType ? sashType.trim().toUpperCase().replace(/\s+/g, '_') : undefined,
+                    isSheetEvent: true, strTime: '', isHidden: false, strEvent: name
+                });
+            });
+        } catch (error) { console.error('Erro ao buscar ou processar dados da planilha:', error); }
+    }
+
+    function createGameItem(event) {
+        let itemHTML = '', tooltipText = '';
+        if (event.idHomeTeam && event.strAwayTeam) {
+            const homeTeamShort = (event.strHomeTeam || '').substring(0, 3).toUpperCase();
+            const awayTeamShort = (event.strAwayTeam || '').substring(0, 3).toUpperCase();
+            itemHTML = `<img src="${event.strHomeTeamBadge}" alt="${homeTeamShort}" class="w-3 h-3 object-contain"><span class="font-medium text-gray-700 pl-1 text-xs">${homeTeamShort}</span><span class="mx-1 text-gray-400 text-xs">vs</span><span class="font-medium text-gray-700 pr-1 text-xs">${awayTeamShort}</span><img src="${event.strAwayTeamBadge}" alt="${awayTeamShort}" class="w-3 h-3 object-contain">`;
+            tooltipText = `Evento: ${event.strEvent}\nCampeonato: ${event.strLeague}\nTimes: ${event.strHomeTeam} vs ${event.strAwayTeam}`;
+        } else {
+            let eventName = (event.strEvent || ''), icon = '';
+            if (event.idLeague == UFC_LEAGUE_ID) {
+                eventName = eventName.includes(':') ? eventName.split(':')[1].trim() : eventName;
+                icon = `<i class="fas fa-hand-fist text-red-500 w-3 text-center mr-1"></i>`;
+            } else if (event.isSheetEvent) {
+                icon = `<i class="fas fa-star text-yellow-500 w-3 text-center mr-1"></i>`;
+            }
+            itemHTML = `${icon}<span class="font-medium text-gray-700 truncate text-xs" style="max-width: 80px;">${eventName}</span>`;
+            tooltipText = `Evento: ${event.strEvent}\nCampeonato: ${event.strLeague}`;
+        }
+        return `<div class="flex items-center justify-center my-0.5 p-0.5 bg-gray-50 hover:bg-gray-200 rounded-md transition-colors duration-150" title="${tooltipText}">${itemHTML}</div>`;
+    }
+
+    function getGamePriorityScore(game) {
+        let score = game.importanceScore || 0;
+        if (game.matchType === 'FINAL') score += 50;
+        if (game.matchType === 'SEMI_FINAL') score += 40;
+        if (game.matchType === 'QUARTAS_FINAL') score += 30;
+        if (game.idLeague == LIBERTADORES_LEAGUE_ID) score += 25;
+        if (game.idLeague == CHAMPIONS_LEAGUE_ID) score += 25;
+        if (game.idLeague == SUDAMERICANA_LEAGUE_ID) score += 25;
+        if (game.idLeague == UFC_LEAGUE_ID) score += 15;
+        if (game.isSheetEvent) score += 5;
+        return score;
+    }
+
+    const toYYYYMMDD = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+    const getGamesForDate = (date) => {
+        const dateString = toYYYYMMDD(date);
+        return Array.from(allEvents.values())
+            .filter(e => e.effectiveDate === dateString && !e.isHidden)
+            .sort((a, b) => getGamePriorityScore(b) - getGamePriorityScore(a));
+    };
+
+    function renderMonthView() {
+        const grid = document.getElementById('month-view-grid');
+        const title = document.getElementById('view-title');
+        grid.innerHTML = '';
+        expandedDayId = null; 
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        const monthName = currentDate.toLocaleString('pt-BR', { month: 'long' });
+        title.textContent = `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} de ${year}`;
+        const firstDayOfMonth = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const today = new Date();
+
+        for (let i = 0; i < firstDayOfMonth; i++) { grid.innerHTML += `<div class="calendar-day not-current-month"><div class="day-number"></div></div>`; }
+        
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dayDate = new Date(year, month, day);
+            const dateString = toYYYYMMDD(dayDate);
+            const gamesForDay = getGamesForDate(dayDate);
+            let gamesHTML = '';
+            let buttonHTML = '';
+
+            if (gamesForDay.length > MONTH_GAMES_LIMIT) {
+                const visibleGames = gamesForDay.slice(0, MONTH_GAMES_LIMIT);
+                const hiddenGames = gamesForDay.slice(MONTH_GAMES_LIMIT);
+                gamesHTML += visibleGames.map(createGameItem).join('');
+                gamesHTML += `<div id="more-games-${dateString}" class="hidden space-y-1">${hiddenGames.map(createGameItem).join('')}</div>`;
+                buttonHTML = `<button class="toggle-games-btn" data-target-id="more-games-${dateString}">+${hiddenGames.length} mais <i class="fas fa-chevron-down text-xs ml-1"></i></button>`;
+            } else {
+                gamesHTML = gamesForDay.map(createGameItem).join('');
+            }
+
+            const isToday = today.toDateString() === dayDate.toDateString();
+            grid.innerHTML += `
+                <div class="calendar-day ${isToday ? 'today' : ''}">
+                    <div class="day-number">${day}</div>
+                    <div class="games-container">${gamesHTML}</div>
+                    ${buttonHTML}
+                </div>`;
+        }
+    }
+
+    function renderWeekView() {
+        const grid = document.getElementById('week-view-grid');
+        const title = document.getElementById('view-title');
+        grid.innerHTML = '';
+        const today = new Date();
+        const startOfWeek = new Date(currentDate);
+        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(endOfWeek.getDate() + 6);
+        title.textContent = `${startOfWeek.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'})} - ${endOfWeek.toLocaleDateString('pt-BR', {day:'2-digit', month:'short', year:'numeric'})}`;
+
+        for(let i = 0; i < 7; i++) {
+            const dayDate = new Date(startOfWeek);
+            dayDate.setDate(dayDate.getDate() + i);
+            const gamesForDay = getGamesForDate(dayDate);
+            const gamesHTML = gamesForDay.map(createGameItem).join('');
+            const isToday = today.toDateString() === dayDate.toDateString();
+            grid.innerHTML += `
+                <div class="week-day-column">
+                    <div class="week-day-header ${isToday ? 'today' : ''}">
+                        <div class="text-xs text-gray-500 font-semibold text-center">${dayDate.toLocaleDateString('pt-BR', {weekday: 'short'})}</div>
+                        <div class="day-num w-5 h-5 rounded-full flex items-center justify-center mx-auto font-bold text-xs">${dayDate.getDate()}</div>
+                    </div>
+                    <div class="p-1 space-y-1">${gamesHTML}</div>
+                </div>
+            `;
+        }
+    }
+
+    function renderDayView() {
+        const container = document.getElementById('day-view-container');
+        const title = document.getElementById('view-title');
+        container.innerHTML = '';
+        title.textContent = currentDate.toLocaleDateString('pt-BR', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'});
+
+        const gamesForDay = getGamesForDate(currentDate);
+        if(gamesForDay.length > 0) {
+            container.innerHTML = `<div class="space-y-2">${gamesForDay.map(createGameItem).join('')}</div>`;
+        } else {
+            container.innerHTML = `<p class="text-center text-gray-500 py-8">Nenhum jogo ou evento para esta data.</p>`;
+        }
+    }
+
+    function render() {
+        const pageContent = document.getElementById('page-content');
+        pageContent.classList.add('hidden'); 
+
+        document.getElementById('month-view-container').classList.add('hidden');
+        document.getElementById('week-view-container').classList.add('hidden');
+        document.getElementById('day-view-container').classList.add('hidden');
+
+        if (currentView === 'month') {
+            document.getElementById('month-view-container').classList.remove('hidden');
+            renderMonthView();
+        } else if (currentView === 'week') {
+            document.getElementById('week-view-container').classList.remove('hidden');
+            renderWeekView();
+        } else if (currentView === 'day') {
+            document.getElementById('day-view-container').classList.remove('hidden');
+            renderDayView();
+        }
+        pageContent.classList.remove('hidden');
+    }
+    
+    async function fetchAllData() {
+        const apiPromises = [];
+        const processEvents = (result) => {
+            if (result && result.events) { result.events.forEach(processAndAddEvent); }
+        };
+        MAIN_LEAGUE_IDS.forEach(id => apiPromises.push(fetch(`${BASE_URL}/eventsnextleague.php?id=${id}`).then(res => res.ok ? res.json() : {}).then(processEvents).catch(console.error)));
+        FOOTBALL_TEAM_IDS.forEach(id => apiPromises.push(fetch(`${BASE_URL}/eventsnext.php?id=${id}`).then(res => res.ok ? res.json() : {}).then(processEvents).catch(console.error)));
+        
+        await Promise.all(apiPromises);
+        await fetchSheetData();
+        
+        const statusPromises = Array.from(allEvents.keys()).map(eventId => getDoc(doc(db, "event_statuses", eventId)).then(docSnapshot => {
+            const event = allEvents.get(eventId);
+            if (event) {
+                const savedData = docSnapshot.data() || {};
+                event.customDate = savedData.customDate;
+                event.effectiveDate = savedData.customDate || event.dateEvent;
+                event.isHidden = savedData.isHidden || false;
+            }
+        }));
+        await Promise.all(statusPromises);
+        
+        document.getElementById('page-loader').style.display = 'none';
+        render();
+    }
+
+    function setupEventListeners() {
+        document.querySelectorAll('.view-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                currentView = button.dataset.view;
+                document.querySelector('.view-btn.active-view').classList.remove('active-view');
+                button.classList.add('active-view');
+                currentDate = new Date();
+                render();
+            });
+        });
+
+        document.getElementById('prev-btn').addEventListener('click', () => {
+            if (currentView === 'month') currentDate.setMonth(currentDate.getMonth() - 1);
+            else if (currentView === 'week') currentDate.setDate(currentDate.getDate() - 7);
+            else if (currentView === 'day') currentDate.setDate(currentDate.getDate() - 1);
+            render();
+        });
+
+        document.getElementById('next-btn').addEventListener('click', () => {
+            if (currentView === 'month') currentDate.setMonth(currentDate.getMonth() + 1);
+            else if (currentView === 'week') currentDate.setDate(currentDate.getDate() + 7);
+            else if (currentView === 'day') currentDate.setDate(currentDate.getDate() + 1);
+            render();
+        });
+
+        document.getElementById('month-view-grid').addEventListener('click', function(e) {
+            const toggleBtn = e.target.closest('.toggle-games-btn');
+            if (!toggleBtn) return;
+
+            const targetId = toggleBtn.dataset.targetId;
+            const isCurrentlyExpanded = (expandedDayId === targetId);
+            
+            if (expandedDayId && !isCurrentlyExpanded) {
+                const lastExpandedContainer = document.getElementById(expandedDayId);
+                if (lastExpandedContainer) {
+                    lastExpandedContainer.classList.add('hidden');
+                    const lastToggleButton = document.querySelector(`[data-target-id="${expandedDayId}"]`);
+                    if (lastToggleButton) {
+                        const hiddenCount = lastExpandedContainer.children.length;
+                        lastToggleButton.innerHTML = `+${hiddenCount} mais <i class="fas fa-chevron-down text-xs ml-1"></i>`;
+                        lastToggleButton.classList.remove('is-expanded');
+                    }
+                }
+            }
+            
+            const moreGamesContainer = document.getElementById(targetId);
+            if (moreGamesContainer) {
+                const isNowHidden = moreGamesContainer.classList.toggle('hidden');
+                
+                if (!isNowHidden) {
+                    toggleBtn.innerHTML = `Ver menos <i class="fas fa-chevron-up text-xs ml-1"></i>`;
+                    toggleBtn.classList.add('is-expanded');
+                    expandedDayId = targetId;
+                } else {
+                    const hiddenCount = moreGamesContainer.children.length;
+                    toggleBtn.innerHTML = `+${hiddenCount} mais <i class="fas fa-chevron-down text-xs ml-1"></i>`;
+                    toggleBtn.classList.remove('is-expanded');
+                    expandedDayId = null;
+                }
+            }
+        });
+    }
+
+    async function initialize() {
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        await signInAnonymously(auth);
+        db = getFirestore(app);
+        
+        const header = document.querySelector('header');
+        const mainContent = document.getElementById('main-container');
+        const headerTriggerZone = document.getElementById('header-trigger-zone');
+        let hideHeaderTimeout = null;
+        mainContent.style.transition = 'padding-top 0.3s ease-in-out';
+        const adjustMainContentPadding = () => {
+            const headerHeight = header.offsetHeight;
+            mainContent.style.paddingTop = header.classList.contains('header-hidden') ? '0px' : `${headerHeight}px`;
+        };
+        adjustMainContentPadding();
+        setTimeout(() => { header.classList.add('header-hidden'); adjustMainContentPadding(); }, 500);
+        headerTriggerZone.addEventListener('mouseenter', () => { clearTimeout(hideHeaderTimeout); header.classList.remove('header-hidden'); adjustMainContentPadding(); });
+        header.addEventListener('mouseleave', () => { hideHeaderTimeout = setTimeout(() => { header.classList.add('header-hidden'); adjustMainContentPadding(); }, 500); });
+        
+        setupEventListeners();
+        fetchAllData();
+    }
+
+    document.addEventListener('DOMContentLoaded', initialize);
+    </script>
+</body>
+</html>
