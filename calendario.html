@@ -12,20 +12,16 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         
-        .header-hidden { transform: translateY(-100%); }
-        #header-trigger-zone { position: fixed; top: 0; left: 0; width: 100%; height: 5px; z-index: 100; }
+        /* Regras .header-hidden e #header-trigger-zone removidas daqui */
 
         #month-view-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-        /* ALTERADO: Altura mínima de cada dia reduzida para compactar a visão mensal */
         .calendar-day { border: 1px solid #e2e8f0; background-color: #fff; min-height: 92px; padding: 4px; display: flex; flex-direction: column; }
         .games-container { flex-grow: 1; }
         .calendar-day.today { border-color: #4f46e5; background-color: #eef2ff; }
-        /* ALTERADO: Tamanho da fonte dos números do dia ligeiramente reduzido */
         .day-number { font-weight: 600; color: #374151; margin-bottom: 2px; font-size: 0.7rem; }
         .today .day-number { color: #4f46e5; }
         .calendar-day.not-current-month { background-color: #f9fafb; pointer-events: none; }
         .calendar-day.not-current-month .day-number { color: #d1d5db; }
-        /* ALTERADO: Tamanho da fonte do botão "ver mais" reduzido */
         .toggle-games-btn { cursor: pointer; width: 100%; text-align: center; margin-top: auto; padding: 2px 1px; border-radius: 4px; font-weight: 600; font-size: 0.65rem; }
         .toggle-games-btn.is-expanded { color: #c2410c; }
         .toggle-games-btn.is-expanded:hover { background-color: #fff7ed; }
@@ -45,25 +41,23 @@
     </style>
 </head>
 <body class="antialiased text-gray-800">
-    <div id="header-trigger-zone"></div>
-
     <div id="page-loader" class="fixed inset-0 bg-gray-100 z-50 flex flex-col items-center justify-center">
         <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-500"></div>
         <p class="mt-4 text-lg text-gray-600">A carregar calendário...</p>
     </div>
 
     <header class="bg-white shadow-md fixed w-full top-0 z-30 transition-transform duration-300 ease-in-out">
-        <div class="container mx-auto px-6 py-3 flex justify-between items-center">
-            <img src="https://placehold.co/100x40/000000/FFFFFF?text=H2BET" alt="Logo H2BET" class="h-10">
+        <div class="container mx-auto px-6 py-1 flex justify-between items-center">
+            <img src="https://placehold.co/100x40/000000/FFFFFF?text=H2BET" alt="Logo H2BET" class="h-8">
             <nav class="flex space-x-2">
-                <a href="index.html" class="px-4 py-2 bg-gray-200 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors">Home</a>
-                <a href="calendario.html" class="px-4 py-2 bg-gray-700 text-white rounded-md text-sm font-medium hover:bg-gray-800 transition-colors">Calendário</a>
-                <a href="gantt.html" class="px-4 py-2 bg-gray-200 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors">Gantt</a>
+                <a href="index.html" class="px-4 py-1 bg-gray-200 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors">Home</a>
+                <a href="calendario.html" class="px-4 py-1 bg-gray-700 text-white rounded-md text-sm font-medium hover:bg-gray-800 transition-colors">Calendário</a>
+                <a href="gantt.html" class="px-4 py-1 bg-gray-200 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors">Gantt</a>
             </nav>
         </div>
     </header>
 
-    <main id="main-container" class="container mx-auto px-6 py-3" style="padding-top: 0px;">
+    <main id="main-container" class="container mx-auto px-6 py-3">
         <div id="view-controls" class="relative flex justify-center items-center mb-2 h-9">
             <div class="flex items-center justify-center gap-3">
                 <button id="prev-btn" class="p-2 w-8 h-8 flex items-center justify-center bg-white border border-gray-300 rounded-full hover:bg-gray-100 transition-colors"><i class="fas fa-chevron-left text-xs"></i></button>
@@ -125,7 +119,7 @@
     const SUDAMERICANA_LEAGUE_ID = '4724';
     const LIBERTADORES_LEAGUE_ID = '4501';
     const CHAMPIONS_LEAGUE_ID = '4480';
-    const MONTH_GAMES_LIMIT = 3; // Reduzido para caber melhor no novo layout
+    const MONTH_GAMES_LIMIT = 3;
 
     function processAndAddEvent(event) {
         if (!event || !event.idEvent || allEvents.has(event.idEvent)) return;
@@ -414,19 +408,16 @@
         await signInAnonymously(auth);
         db = getFirestore(app);
         
+        // ALTERADO: Lógica do Header simplificada
         const header = document.querySelector('header');
         const mainContent = document.getElementById('main-container');
-        const headerTriggerZone = document.getElementById('header-trigger-zone');
-        let hideHeaderTimeout = null;
-        mainContent.style.transition = 'padding-top 0.3s ease-in-out';
         const adjustMainContentPadding = () => {
             const headerHeight = header.offsetHeight;
-            mainContent.style.paddingTop = header.classList.contains('header-hidden') ? '0px' : `${headerHeight}px`;
+            mainContent.style.paddingTop = `${headerHeight}px`;
         };
+        // Ajusta o padding quando a página carrega e se a janela for redimensionada
         adjustMainContentPadding();
-        setTimeout(() => { header.classList.add('header-hidden'); adjustMainContentPadding(); }, 500);
-        headerTriggerZone.addEventListener('mouseenter', () => { clearTimeout(hideHeaderTimeout); header.classList.remove('header-hidden'); adjustMainContentPadding(); });
-        header.addEventListener('mouseleave', () => { hideHeaderTimeout = setTimeout(() => { header.classList.add('header-hidden'); adjustMainContentPadding(); }, 500); });
+        window.addEventListener('resize', adjustMainContentPadding);
         
         setupEventListeners();
         fetchAllData();
