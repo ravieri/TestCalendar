@@ -537,18 +537,37 @@
         }
     }
 
+    // --- INÍCIO DA ALTERAÇÃO ---
     function renderTopMatches(events) {
+        // Adiciona um filtro para remover jogos onde o nome da liga contém "Friendlies" ou "Amistoso"
+        const relevantEvents = events.filter(event =>
+            event.strLeague &&
+            !event.strLeague.toLowerCase().includes('friendlies') &&
+            !event.strLeague.toLowerCase().includes('amistoso')
+        );
+
         const container = document.getElementById('top-matches-container');
         const TIER_1_THRESHOLD = 9, TIER_2_THRESHOLD = 7;
         const matchesToDisplayMap = new Map();
-        events.filter(event => event.matchType && !event.isSheetEvent).forEach(event => matchesToDisplayMap.set(event.idEvent, event));
+
+        // A partir daqui, usamos 'relevantEvents' em vez de 'events' para a lógica de seleção
+        relevantEvents.filter(event => event.matchType && !event.isSheetEvent).forEach(event => matchesToDisplayMap.set(event.idEvent, event));
+
         let starMatches = [];
-        const tier1Matches = events.filter(event => !event.isSheetEvent && (event.importanceScore || 0) >= TIER_1_THRESHOLD);
-        starMatches = (tier1Matches.length > 0) ? tier1Matches : events.filter(event => !event.isSheetEvent && (event.importanceScore || 0) >= TIER_2_THRESHOLD);
-        starMatches.forEach(event => { if (!matchesToDisplayMap.has(event.idEvent)) matchesToDisplayMap.set(event.idEvent, event); });
+        const tier1Matches = relevantEvents.filter(event => !event.isSheetEvent && (event.importanceScore || 0) >= TIER_1_THRESHOLD);
+        
+        starMatches = (tier1Matches.length > 0) ? tier1Matches : relevantEvents.filter(event => !event.isSheetEvent && (event.importanceScore || 0) >= TIER_2_THRESHOLD);
+        
+        starMatches.forEach(event => {
+            if (!matchesToDisplayMap.has(event.idEvent)) {
+                matchesToDisplayMap.set(event.idEvent, event);
+            }
+        });
+
         const sortedMatches = Array.from(matchesToDisplayMap.values()).sort((a, b) => new Date(a.effectiveDate) - new Date(b.effectiveDate));
         container.innerHTML = sortedMatches.length > 0 ? sortedMatches.map(createTopMatchCard).join('') : '<p class="text-gray-500">Nenhum jogo de destaque encontrado.</p>';
     }
+    // --- FIM DA ALTERAÇÃO ---
 
     function renderAlternativeDates(events) {
         const container = document.getElementById('alternative-dates-container');
