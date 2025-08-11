@@ -414,17 +414,16 @@
             const response = await fetch(sheetUrl);
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const csvText = await response.text();
-            // Pula o cabeçalho e processa as linhas (Data, Campanhas)
+            
             csvText.split(/\r?\n/).slice(1).forEach((row, index) => {
                 const columns = row.split(',').map(c => c.trim());
+                // Agora esperamos até 4 colunas. Data e Nome são essenciais.
                 if (columns.length < 2 || !columns[0] || !columns[1]) return;
-                const [date, name] = columns;
+                
+                const [date, name, type, imageUrl] = columns;
 
-                // Assume uma imagem local para a "Copa das Múltiplas"
-                let imageUrl = 'https://placehold.co/600x400/cccccc/ffffff?text=Campanha';
-                if (name.toLowerCase().includes('copa das múltiplas')) {
-                    imageUrl = "Copa das multiplas imaem.png";
-                }
+                // Usa a imagem da planilha se for um link válido, senão, usa uma imagem padrão.
+                let finalImageUrl = (imageUrl && imageUrl.startsWith('http')) ? imageUrl : 'https://placehold.co/600x400/cccccc/ffffff?text=Campanha';
 
                 const [day, month, year] = date.split('/');
                 if (!day || !month || !year) return;
@@ -433,9 +432,11 @@
                 processAndAddEvent({
                     idEvent: `campaign_${index}`,
                     strEvent: name,
-                    logoUrl: imageUrl,
+                    logoUrl: finalImageUrl,
                     dateEvent: formattedDate,
-                    isCampaign: true, // Nova propriedade para identificar campanhas
+                    isCampaign: true,
+                    // Nova propriedade para armazenar o tipo (Início/Fim)
+                    campaignType: type ? type.trim().toUpperCase() : '', 
                     isHidden: false,
                 });
             });
@@ -497,9 +498,28 @@
 
     // FUNÇÃO ATUALIZADA PARA CRIAR O CARD DE CAMPANHA (MAIS SIMPLES)
     function createCampaignCard(event) {
-        // Classes e estrutura ajustadas para ficarem iguais às de "Datas Alternativas"
         let cardClasses = "bg-white p-2 rounded-lg shadow-sm flex-shrink-0 w-36 flex flex-col relative overflow-hidden event-card-campaign";
         if (isEditModeEnabled) cardClasses += " cursor-pointer hover:ring-2 hover:ring-blue-500";
+
+        // Define o texto e a cor da etiqueta com base no tipo da campanha
+        let typeLabel = '';
+        let typeColorClass = '';
+        if (event.campaignType === 'INICIO') {
+            typeLabel = 'Início';
+            typeColorClass = 'text-green-600'; // Verde para início
+        } else if (event.campaignType === 'FIM') {
+            typeLabel = 'Fim';
+            typeColorClass = 'text-red-600'; // Vermelho para fim
+        }
+
+        // Cria o HTML para a etiqueta de data, aplicando a formatação condicional
+        let dateLabelHtml = '';
+        if(typeLabel) {
+            dateLabelHtml = `<span class="font-bold ${typeColorClass}">${typeLabel}:</span>`;
+        } else {
+            // Fallback se não houver tipo definido na planilha
+            dateLabelHtml = `<span class="font-bold text-indigo-600">Data:</span>`;
+        }
 
         return `
             <div class="${cardClasses}" data-event-id="${event.idEvent}">
@@ -508,7 +528,9 @@
                     <p class="text-xs font-semibold whitespace-nowrap overflow-hidden text-ellipsis w-full px-1" title="${event.strEvent}">${event.strEvent}</p>
                 </div>
                 <div>
-                    <p class="text-center text-xs font-bold mt-1 text-indigo-600">Início: ${formatDateForCard(event.effectiveDate)}</p>
+                     <p class="text-center text-xs mt-1">
+                        ${dateLabelHtml} ${formatDateForCard(event.effectiveDate)}
+                     </p>
                     <div class="mt-2 flex justify-center items-center gap-2 px-1">
                         ${getStatusTrafficLights(event)}
                     </div>
