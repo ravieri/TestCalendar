@@ -198,6 +198,10 @@
                     <input type="date" id="generic-date-input" class="w-full p-2 border border-gray-300 rounded-md shadow-sm">
                 </div>
                 <div>
+                    <label for="generic-time-input" class="block text-sm font-medium text-gray-700 mb-1">Horário</label>
+                    <input type="time" id="generic-time-input" class="w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                </div>
+                <div>
                     <label for="generic-sash-select" class="block text-sm font-medium text-gray-700 mb-1">Faixa / Tipo</label>
                     <select id="generic-sash-select" class="w-full p-2 border border-gray-300 rounded-md shadow-sm">
                         <option value="">Nenhuma</option>
@@ -684,6 +688,9 @@
         if (!isEditModeEnabled && event.isHidden) cardClasses += ' hidden';
         if (isEditModeEnabled && event.isHidden) cardClasses += ' opacity-50';
         
+        // LINHA ALTERADA PARA USAR O HORÁRIO PERSONALIZADO
+        const effectiveTime = (event.customTime || event.strTime || "00:00:00").substring(0, 5);
+
         return `
             <div class="${cardClasses}" data-event-id="${event.idEvent}">
                 ${visibilityIconHTML}
@@ -695,7 +702,7 @@
                 <div>
                     <div class="flex items-baseline justify-center space-x-2">
                         <p class="text-sm font-bold">${formatDateForCard(event.effectiveDate)}</p>
-                        <p class="text-xs text-gray-600">${event.strTime.substring(0,5)}</p>
+                        <p class="text-xs text-gray-600">${effectiveTime}</p>
                     </div>
                     ${matchTypeHTML}
                     <div class="mt-1.5 flex justify-center items-center gap-2 px-1">
@@ -839,6 +846,15 @@
         const TIER_1_THRESHOLD = 9, TIER_2_THRESHOLD = 7;
         const matchesToDisplayMap = new Map();
 
+        // **INÍCIO DA MODIFICAÇÃO: Adiciona uma regra para sempre incluir jogos do Galo**
+        relevantEvents.forEach(event => {
+            if (event.idHomeTeam === GALO_ID || event.idAwayTeam === GALO_ID) {
+                matchesToDisplayMap.set(event.idEvent, event);
+            }
+        });
+        // **FIM DA MODIFICAÇÃO**
+
+        // Mantém as regras antigas para outros jogos importantes
         relevantEvents.filter(event => event.matchType && !event.isSheetEvent).forEach(event => matchesToDisplayMap.set(event.idEvent, event));
 
         let starMatches = [];
@@ -912,25 +928,26 @@
         updateProgress(96);
 
 
-        const statusPromises = Array.from(allEvents.keys()).map(eventId => getDoc(doc(db, "event_statuses", eventId)).then(docSnapshot => {
-            const event = allEvents.get(eventId);
-            if (event) {
-                const savedData = docSnapshot.data() || {};
-                event.statuses = { mkt: 'red', crm: 'red', tra: 'red', ...savedData };
+        // Dentro da função fetchAllData...
+    const statusPromises = Array.from(allEvents.keys()).map(eventId => getDoc(doc(db, "event_statuses", eventId)).then(docSnapshot => {
+        const event = allEvents.get(eventId);
+        if (event) {
+            const savedData = docSnapshot.data() || {};
+            event.statuses = { mkt: 'red', crm: 'red', tra: 'red', ...savedData };
 
-                if (event.isAlternativeDate) {
-                    event.strEvent = savedData.customName || event.originalStrEvent;
-                    event.logoUrl = savedData.customImageUrl || event.originalLogoUrl;
-                    event.effectiveDate = savedData.customDate || event.originalDateEvent;
-                } else {
-                    event.matchType = savedData.matchType;
-                    event.customDate = savedData.customDate;
-                    event.effectiveDate = savedData.customDate || event.dateEvent;
-                    event.isHidden = savedData.isHidden || false;
-                }
+            if (event.isAlternativeDate) {
+                // ... (código existente)
+            } else {
+                event.matchType = savedData.matchType;
+                event.customDate = savedData.customDate;
+                event.customTime = savedData.customTime; // <-- ADICIONE ESTA LINHA
+                event.effectiveDate = savedData.customDate || event.dateEvent;
+                event.isHidden = savedData.isHidden || false;
             }
-        }));
-        await Promise.all(statusPromises);
+        }
+    }));
+    await Promise.all(statusPromises);
+    // ...
         updateProgress(98);
         saveDataToCache(allEvents);
         updateProgress(100);
@@ -956,7 +973,7 @@
                     });
                 }
 
-                if (event.isAlternativeDate || event.isCrm) { // Tratamento para CRM e Datas Alt.
+                if (event.isAlternativeDate || event.isCrm) {
                     const newName = savedData.customName || event.originalStrEvent || event.strEvent;
                     const newImageUrl = savedData.customImageUrl || event.originalLogoUrl || event.logoUrl;
                     const newDate = savedData.customDate || event.originalDateEvent || event.dateEvent;
@@ -967,12 +984,17 @@
                         event.effectiveDate = newDate;
                     }
                 } else {
-                     const newIsHidden = savedData.isHidden === undefined ? event.isHidden : savedData.isHidden;
-                    if (event.matchType !== savedData.matchType || event.isHidden !== newIsHidden || event.customDate !== savedData.customDate) {
+                    const newIsHidden = savedData.isHidden === undefined ? event.isHidden : savedData.isHidden;
+                    const newCustomTime = savedData.customTime; // Pega o novo horário
+
+                    // Verifica se algo mudou que precise de re-renderização
+                    if (event.matchType !== savedData.matchType || event.isHidden !== newIsHidden || event.customDate !== savedData.customDate || event.customTime !== newCustomTime) {
                         needsRerender = true;
                     }
+                    
                     event.matchType = savedData.matchType;
                     event.customDate = savedData.customDate;
+                    event.customTime = newCustomTime; // Atualiza o horário no objeto do evento
                     event.effectiveDate = savedData.customDate || event.dateEvent;
                     event.isHidden = newIsHidden;
                 }
@@ -1046,6 +1068,8 @@
         modal.dataset.editingEventId = eventId;
         document.getElementById('event-name-in-modal').textContent = event.strEvent || `${event.strHomeTeam} vs ${event.strAwayTeam}`;
         document.getElementById('generic-date-input').value = event.effectiveDate;
+        // LINHA ADICIONADA para popular o horário
+        document.getElementById('generic-time-input').value = (event.customTime || event.strTime || "").substring(0, 5);
         document.getElementById('generic-sash-select').value = event.matchType || '';
         modal.classList.remove('hidden');
     }
@@ -1065,12 +1089,22 @@
         const modal = document.getElementById('generic-edit-modal');
         const eventId = modal.dataset.editingEventId;
         if (!eventId) return;
+
         const event = allEvents.get(eventId);
         const newDate = document.getElementById('generic-date-input').value;
+        const newTime = document.getElementById('generic-time-input').value; // Lendo o novo horário
         const newSash = document.getElementById('generic-sash-select').value || null;
+        
         const updates = {};
+        const originalTime = (event.strTime || "00:00:00").substring(0, 5);
+
         if (newDate !== event.dateEvent) updates.customDate = newDate;
+        // LÓGICA ADICIONADA para salvar o horário
+        if (newTime && newTime !== originalTime) {
+            updates.customTime = newTime + ':00'; // Salva no formato HH:mm:ss
+        }
         if (newSash !== (event.matchType || null)) updates.matchType = newSash;
+
         if (Object.keys(updates).length > 0) {
             await setDoc(doc(db, "event_statuses", eventId), updates, { merge: true });
         }
