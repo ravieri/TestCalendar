@@ -756,7 +756,25 @@
     }
 
     function getSortedEvents() {
-        return Array.from(allEvents.values()).sort((a, b) => new Date(a.effectiveDate) - new Date(b.effectiveDate));
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Define a data para o início do dia (meia-noite) para garantir uma comparação justa.
+
+        // Pega todos os eventos do mapa
+        const allCurrentEvents = Array.from(allEvents.values());
+
+        // Filtra para manter apenas os eventos cuja data é maior ou igual a hoje
+        const futureEvents = allCurrentEvents.filter(event => {
+            // Se um evento não tiver data, ele será removido para segurança
+            if (!event.effectiveDate) return false; 
+            
+            // Cria a data do evento. Adicionar 'T00:00:00' ajuda a evitar problemas com fuso horário
+            const eventDate = new Date(event.effectiveDate + 'T00:00:00');
+            
+            return eventDate >= today;
+        });
+
+        // Ordena os eventos futuros do mais próximo para o mais distante
+        return futureEvents.sort((a, b) => new Date(a.effectiveDate) - new Date(b.effectiveDate));
     }
 
     function rerenderAllSections() {
