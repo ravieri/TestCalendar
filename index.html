@@ -257,9 +257,10 @@
     const IMPORTANT_LEAGUES = { '4351': 'https://www.thesportsdb.com/images/media/league/badge/ny47lx1701964009.png', '4331': 'https://upload.wikimedia.org/wikipedia/pt/f/f9/Bundesliga_logo_%282017%29.png', '4335': 'https://www.thesportsdb.com/images/media/league/badge/7onmyv1534768460.png', '4328': 'https://footballgroundguide.com/app/uploads/2023/12/premiereleague-logo-768x768.png', '4480': 'https://ssl.gstatic.com/onebox/media/sports/logos/YijZbE4UZ_09JrTvBU91fg_64x64.png', '4501': 'https://s3.static.brasilescola.uol.com.br/be/2022/03/taca-da-libertadores.jpg', '4724': 'https://upload.wikimedia.org/wikipedia/pt/thumb/e/e4/Conmebol_Sudamericana_logo.png/428px-Conmebol_Sudamericana_logo.png', '4443': 'https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcQfDSkxta9cASfWZmVMXvVf5L1x-CJTGLGmjYt5GyBC7V01VVoq' };
     const TEAM_LEVELS = { '134465': 5, '134287': 5, '133729': 5, '133739': 5, '133613': 5, '133614': 5, '133668': 5, '133693': 5, '133692': 5, '133689': 5, '133702': 5, '133604': 5, '133612': 5, '133610': 5, '133732': 5, '133667': 5, '134299': 4, '134291': 4, '134284': 4, '134296': 4, '134288': 4, '134281': 4, '133616': 4, '134777': 4, '133671': 4, '133700': 4, '133699': 4, '133695': 4, '133734': 4, '133698': 4, '133696': 4, '133601': 4, '133619': 4, '133690': 4, '134282': 3, '134294': 3, '134286': 3, '134293': 3, '134285': 3, '136186': 3, '133736': 3, '133731': 3, '133735': 3, '133728': 3, '133737': 3, '133694': 3, '133701': 3, '134280': 2, '134744': 2, '134736': 2, '135887': 2, '133636': 2 };
     const MAIN_LEAGUE_IDS = ['4351', '4331', '4335', '4328', '4480', '4501', '4443', '4724'];
-    const FOOTBALL_TEAM_IDS = Object.keys(TEAM_LEVELS);
+    const FOOTBALL_TEAM_IDS = [...Object.keys(TEAM_LEVELS), '134496'];
     const UFC_LEAGUE_ID = '4443';
     const GALO_ID = '134299';
+    const BRASIL_ID = '134496'; // ID da Seleção Brasileira
     const NFL_LEAGUE_ID = '4391'; // <-- NOVO
     const STATUS_COLORS = { red: '#ef4444', yellow: '#f59e0b', green: '#22c55e' };
     const ESPORTS_IMAGES = {
@@ -929,7 +930,10 @@
         const matchesToDisplayMap = new Map();
 
         relevantEvents.forEach(event => {
-            if (event.idHomeTeam === GALO_ID || event.idAwayTeam === GALO_ID) {
+            // Prioridade máxima: Jogos do Galo ou da Seleção Brasileira
+            if ( (event.idHomeTeam === GALO_ID || event.idAwayTeam === GALO_ID) ||
+                 (event.idHomeTeam === BRASIL_ID || event.idAwayTeam === BRASIL_ID) )
+            {
                 matchesToDisplayMap.set(event.idEvent, event);
             }
         });
