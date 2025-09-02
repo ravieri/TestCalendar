@@ -114,6 +114,19 @@
                 </div>
             </section>
 
+            <section id="nfl-matches" class="mb-4">
+                <div class="flex items-center">
+                    <div class="w-24 flex-shrink-0 pr-2">
+                        <h2 class="text-xs font-semibold text-gray-600">Próximos Jogos NFL</h2>
+                        <div class="flex text-yellow-400 text-xs">
+                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <div id="nfl-matches-container" class="flex-grow flex space-x-1 overflow-x-auto custom-scrollbar pb-4">
+                        </div>
+                </div>
+            </section>
+
             <section id="alternative-dates" class="mb-4"> <div class="flex items-center">
                     <div class="w-24 flex-shrink-0 pr-2"> <h2 class="text-xs font-semibold text-gray-600">Datas Alternativas</h2> <div class="flex text-yellow-400 text-xs">
                             <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
@@ -135,6 +148,8 @@
                         </div>
                 </div>
             </section>
+            
+            
 
         </main>
     </div>
@@ -245,6 +260,7 @@
     const FOOTBALL_TEAM_IDS = Object.keys(TEAM_LEVELS);
     const UFC_LEAGUE_ID = '4443';
     const GALO_ID = '134299';
+    const NFL_LEAGUE_ID = '4391'; // <-- NOVO
     const STATUS_COLORS = { red: '#ef4444', yellow: '#f59e0b', green: '#22c55e' };
     const ESPORTS_IMAGES = {
         'LOL': 'https://cdn1.epicgames.com/offer/24b9b5e323bc40eea252a10cdd3b2f10/EGS_LeagueofLegends_RiotGames_S1_2560x1440-80471666c140f790f28dff68d72c384b',
@@ -599,8 +615,11 @@
         if (!isEditModeEnabled && event.isHidden) cardClasses += ' hidden';
         if (isEditModeEnabled && event.isHidden) cardClasses += ' opacity-50';
 
+        // NOVO: Texto que aparecerá no hover
+        const tooltipText = `${league.name}\nData: ${formatDateForCard(event.effectiveDate)}`;
+
         return `
-            <div class="${cardClasses}" data-event-id="${event.idEvent}">
+            <div class="${cardClasses}" data-event-id="${event.idEvent}" title="${tooltipText}">
                 ${visibilityIconHTML}
                 <div class="flex-grow flex flex-col items-center justify-center">
                     <img src="${league.logo}" alt="${league.name}" class="h-10 object-contain" title="${league.name}">
@@ -660,11 +679,13 @@
         if (!isEditModeEnabled && event.isHidden) cardClasses += ' hidden';
         if (isEditModeEnabled && event.isHidden) cardClasses += ' opacity-50';
         
-        // LINHA ALTERADA PARA USAR O HORÁRIO PERSONALIZADO
-        const effectiveTime = (event.customTime || event.strTime || "00:00:00").substring(0, 5);
+        // --- LINHAS MODIFICADAS ---
+        const { localDate, localTime } = getLocalDateTimeInfo(event);
+        
+        const tooltipText = `${event.strHomeTeam} vs ${event.strAwayTeam}\nLiga: ${event.strLeague}\nData: ${localDate} às ${localTime}`;
 
         return `
-            <div class="${cardClasses}" data-event-id="${event.idEvent}">
+            <div class="${cardClasses}" data-event-id="${event.idEvent}" title="${tooltipText}">
                 ${visibilityIconHTML}
                 
                 <div class="flex-grow">
@@ -673,8 +694,8 @@
 
                 <div>
                     <div class="flex items-baseline justify-center space-x-2">
-                        <p class="text-sm font-bold">${formatDateForCard(event.effectiveDate)}</p>
-                        <p class="text-xs text-gray-600">${effectiveTime}</p>
+                        <p class="text-sm font-bold">${localDate}</p>
+                        <p class="text-xs text-gray-600">${localTime}</p>
                     </div>
                     ${matchTypeHTML}
                     <div class="mt-1.5 flex justify-center items-center gap-2 px-1">
@@ -685,8 +706,51 @@
         `;
     }
 
+    // NOVA FUNÇÃO
+    function createNflMatchCard(event) {
+        const visibilityIconHTML = createVisibilityToggleHTML(event);
+        
+        let cardClasses = "bg-white p-1.5 rounded-lg shadow-sm flex-shrink-0 w-44 flex flex-col relative overflow-hidden event-card-match";
+        if (isEditModeEnabled) cardClasses += " hover:ring-2 hover:ring-indigo-500";
+        if (!isEditModeEnabled && event.isHidden) cardClasses += ' hidden';
+        if (isEditModeEnabled && event.isHidden) cardClasses += ' opacity-50';
+        
+        // --- LINHAS MODIFICADAS ---
+        const { localDate, localTime } = getLocalDateTimeInfo(event);
+
+        const tooltipText = `${event.strHomeTeam} vs ${event.strAwayTeam}\nLiga: ${event.strLeague}\nData: ${localDate} às ${localTime}`;
+
+        return `
+            <div class="${cardClasses}" data-event-id="${event.idEvent}" title="${tooltipText}">
+                ${visibilityIconHTML}
+                
+                <div class="flex-grow">
+                     <div>
+                        <div class="flex justify-between items-center text-xs font-semibold text-gray-500 px-1">
+                            <span>${event.strLeague}</span>
+                        </div>
+                        <div class="flex items-center justify-around my-1.5">
+                            <img src="${event.strHomeTeamBadge}" alt="${event.strHomeTeam}" class="h-8 w-8 object-contain">
+                            <span class="font-bold text-gray-400 text-sm">vs</span>
+                            <img src="${event.strAwayTeamBadge}" alt="${event.strAwayTeam}" class="h-8 w-8 object-contain">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex items-baseline justify-center space-x-2">
+                        <p class="text-sm font-bold">${localDate}</p>
+                        <p class="text-xs text-gray-600">${localTime}</p>
+                    </div>
+                    <div class="mt-1.5 flex justify-center items-center gap-2 px-1">
+                        ${getStatusTrafficLights(event)}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     function createAlternativeDateCard(event) {
-        // ALTERADO: Largura do card de w-36 para w-32
         let cardClasses = "bg-white p-2 rounded-lg shadow-sm flex-shrink-0 w-32 flex flex-col relative overflow-hidden alt-date-card";
         if (isEditModeEnabled) cardClasses += " cursor-pointer hover:ring-2 hover:ring-blue-500";
 
@@ -743,6 +807,44 @@
         return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '');
     }
 
+    function getLocalDateTimeInfo(event) {
+        // Se o usuário definiu um horário manual, ele tem prioridade e é tratado como local.
+        // A data não muda neste caso, usamos a original.
+        if (event.customTime) {
+            return {
+                localDate: formatDateForCard(event.effectiveDate),
+                localTime: event.customTime.substring(0, 5)
+            };
+        }
+
+        // Se não há horário ou data da API, retorna um padrão.
+        if (!event.strTime || !event.dateEvent) {
+            return { localDate: formatDateForCard(event.dateEvent), localTime: "--:--" };
+        }
+
+        try {
+            // Combina a data e a hora da API e adiciona 'Z' para marcar como UTC.
+            const utcDateString = `${event.dateEvent}T${event.strTime}Z`;
+            const dateObj = new Date(utcDateString);
+
+            if (isNaN(dateObj)) throw new Error("Data inválida");
+
+            // Usa as funções toLocale... para obter a data e a hora corretas no fuso do navegador.
+            const localDate = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '');
+            const localTime = dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+            return { localDate, localTime };
+
+        } catch (error) {
+            // Em caso de erro, retorna os valores originais como fallback.
+            console.error("Erro ao converter data/hora:", error);
+            return {
+                localDate: formatDateForCard(event.dateEvent),
+                localTime: event.strTime.substring(0, 5)
+            };
+        }
+    }
+
     function getSortedEvents() {
         return Array.from(allEvents.values()).sort((a, b) => new Date(a.effectiveDate) - new Date(b.effectiveDate));
     }
@@ -754,7 +856,8 @@
         renderAlternativeDates(sortedEvents);
         renderEsportsMatches(sortedEvents);
         renderCampaigns(sortedEvents);
-        renderCrm(sortedEvents); // Renderiza a nova seção de CRM
+        renderCrm(sortedEvents);
+        renderNflMatches(sortedEvents); // <-- NOVO
         attachAllListeners();
     }
 
@@ -777,6 +880,8 @@
             container.innerHTML = eventsToRender.map(createCampaignCard).join('');
         }
     }
+
+
 
     function renderCrm(events) {
         const container = document.getElementById('crm-container');
@@ -823,15 +928,12 @@
         const TIER_1_THRESHOLD = 9, TIER_2_THRESHOLD = 7;
         const matchesToDisplayMap = new Map();
 
-        // **INÍCIO DA MODIFICAÇÃO: Adiciona uma regra para sempre incluir jogos do Galo**
         relevantEvents.forEach(event => {
             if (event.idHomeTeam === GALO_ID || event.idAwayTeam === GALO_ID) {
                 matchesToDisplayMap.set(event.idEvent, event);
             }
         });
-        // **FIM DA MODIFICAÇÃO**
 
-        // Mantém as regras antigas para outros jogos importantes
         relevantEvents.filter(event => event.matchType && !event.isSheetEvent).forEach(event => matchesToDisplayMap.set(event.idEvent, event));
 
         let starMatches = [];
@@ -847,6 +949,20 @@
 
         const sortedMatches = Array.from(matchesToDisplayMap.values()).sort((a, b) => new Date(a.effectiveDate) - new Date(b.effectiveDate));
         container.innerHTML = sortedMatches.length > 0 ? sortedMatches.map(createTopMatchCard).join('') : '<p class="text-gray-500">Nenhum jogo de destaque encontrado.</p>';
+    }
+
+    // NOVA FUNÇÃO
+    function renderNflMatches(events) {
+        const container = document.getElementById('nfl-matches-container');
+        if (!container) return;
+        
+        let eventsToRender = events.filter(event => event.isNflMatch);
+        
+        if (eventsToRender.length === 0) {
+            container.innerHTML = '<p class="text-gray-500">Nenhum jogo da NFL encontrado.</p>';
+        } else {
+            container.innerHTML = eventsToRender.map(createNflMatchCard).join('');
+        }
     }
 
     function renderAlternativeDates(events) {
@@ -887,10 +1003,25 @@
         updateProgress(0);
         document.getElementById('page-loader').style.display = 'flex';
         document.getElementById('main-content').classList.add('hidden');
-        const totalApiSources = MAIN_LEAGUE_IDS.length + FOOTBALL_TEAM_IDS.length;
+        const totalApiSources = MAIN_LEAGUE_IDS.length + FOOTBALL_TEAM_IDS.length + 1; // MODIFICADO
         let sourcesFetched = 0;
         const updateApiProgress = () => updateProgress(++sourcesFetched / totalApiSources * 80);
         const apiPromises = [];
+
+        // NOVO FETCH PARA NFL
+        apiPromises.push(
+            fetch(`${BASE_URL}/eventsnextleague.php?id=${NFL_LEAGUE_ID}`)
+                .then(res => res.ok ? res.json() : Promise.reject())
+                .then(result => {
+                    result.events?.forEach(event => {
+                        event.isNflMatch = true; // Adiciona um marcador para identificar esses jogos
+                        processAndAddEvent(event);
+                    });
+                })
+                .catch(console.error)
+                .finally(updateApiProgress)
+        );
+
         MAIN_LEAGUE_IDS.forEach(id => apiPromises.push(fetch(`${BASE_URL}/eventsnextleague.php?id=${id}`).then(res => res.ok ? res.json() : Promise.reject()).then(result => result.events?.forEach(processAndAddEvent)).catch(console.error).finally(updateApiProgress)));
         FOOTBALL_TEAM_IDS.forEach(id => apiPromises.push(fetch(`${BASE_URL}/eventsnext.php?id=${id}`).then(res => res.ok ? res.json() : Promise.reject()).then(result => result.events?.forEach(processAndAddEvent)).catch(console.error).finally(updateApiProgress)));
         await Promise.all(apiPromises);
@@ -903,30 +1034,27 @@
         updateProgress(91);
         await fetchCampaignsData();
         updateProgress(94);
-        await fetchCrmData(); // Busca os dados de CRM
+        await fetchCrmData();
         updateProgress(96);
 
+        const statusPromises = Array.from(allEvents.keys()).map(eventId => getDoc(doc(db, "event_statuses", eventId)).then(docSnapshot => {
+            const event = allEvents.get(eventId);
+            if (event) {
+                const savedData = docSnapshot.data() || {};
+                event.statuses = { mkt: 'red', crm: 'red', tra: 'red', ...savedData };
 
-        // Dentro da função fetchAllData...
-    const statusPromises = Array.from(allEvents.keys()).map(eventId => getDoc(doc(db, "event_statuses", eventId)).then(docSnapshot => {
-        const event = allEvents.get(eventId);
-        if (event) {
-            const savedData = docSnapshot.data() || {};
-            event.statuses = { mkt: 'red', crm: 'red', tra: 'red', ...savedData };
-
-            if (event.isAlternativeDate) {
-                // ... (código existente)
-            } else {
-                event.matchType = savedData.matchType;
-                event.customDate = savedData.customDate;
-                event.customTime = savedData.customTime; // <-- ADICIONE ESTA LINHA
-                event.effectiveDate = savedData.customDate || event.dateEvent;
-                event.isHidden = savedData.isHidden || false;
+                if (event.isAlternativeDate) {
+                    // ... (código existente)
+                } else {
+                    event.matchType = savedData.matchType;
+                    event.customDate = savedData.customDate;
+                    event.customTime = savedData.customTime;
+                    event.effectiveDate = savedData.customDate || event.dateEvent;
+                    event.isHidden = savedData.isHidden || false;
+                }
             }
-        }
-    }));
-    await Promise.all(statusPromises);
-    // ...
+        }));
+        await Promise.all(statusPromises);
         updateProgress(98);
         saveDataToCache(allEvents);
         updateProgress(100);
@@ -964,16 +1092,15 @@
                     }
                 } else {
                     const newIsHidden = savedData.isHidden === undefined ? event.isHidden : savedData.isHidden;
-                    const newCustomTime = savedData.customTime; // Pega o novo horário
+                    const newCustomTime = savedData.customTime;
 
-                    // Verifica se algo mudou que precise de re-renderização
                     if (event.matchType !== savedData.matchType || event.isHidden !== newIsHidden || event.customDate !== savedData.customDate || event.customTime !== newCustomTime) {
                         needsRerender = true;
                     }
                     
                     event.matchType = savedData.matchType;
                     event.customDate = savedData.customDate;
-                    event.customTime = newCustomTime; // Atualiza o horário no objeto do evento
+                    event.customTime = newCustomTime;
                     event.effectiveDate = savedData.customDate || event.dateEvent;
                     event.isHidden = newIsHidden;
                 }
@@ -1047,7 +1174,6 @@
         modal.dataset.editingEventId = eventId;
         document.getElementById('event-name-in-modal').textContent = event.strEvent || `${event.strHomeTeam} vs ${event.strAwayTeam}`;
         document.getElementById('generic-date-input').value = event.effectiveDate;
-        // LINHA ADICIONADA para popular o horário
         document.getElementById('generic-time-input').value = (event.customTime || event.strTime || "").substring(0, 5);
         document.getElementById('generic-sash-select').value = event.matchType || '';
         modal.classList.remove('hidden');
@@ -1071,16 +1197,15 @@
 
         const event = allEvents.get(eventId);
         const newDate = document.getElementById('generic-date-input').value;
-        const newTime = document.getElementById('generic-time-input').value; // Lendo o novo horário
+        const newTime = document.getElementById('generic-time-input').value;
         const newSash = document.getElementById('generic-sash-select').value || null;
         
         const updates = {};
         const originalTime = (event.strTime || "00:00:00").substring(0, 5);
 
         if (newDate !== event.dateEvent) updates.customDate = newDate;
-        // LÓGICA ADICIONADA para salvar o horário
         if (newTime && newTime !== originalTime) {
-            updates.customTime = newTime + ':00'; // Salva no formato HH:mm:ss
+            updates.customTime = newTime + ':00';
         }
         if (newSash !== (event.matchType || null)) updates.matchType = newSash;
 
@@ -1174,7 +1299,6 @@
                     if (event.isAlternativeDate || event.isCrm) {
                         openAltDateEditModal(event.idEvent);
                     } else if (event.isCampaign) {
-                        // Poderia abrir um modal específico para campanhas no futuro
                         console.log("Clicou na campanha:", event.strEvent)
                     } else {
                         openGenericEditModal(event.idEvent);
@@ -1213,7 +1337,8 @@
         addDragScroll(document.getElementById('alternative-dates-container'));
         addDragScroll(document.getElementById('esports-matches-container'));
         addDragScroll(document.getElementById('campaigns-container'));
-        addDragScroll(document.getElementById('crm-container')); // Adicionado para a nova seção
+        addDragScroll(document.getElementById('crm-container'));
+        addDragScroll(document.getElementById('nfl-matches-container')); // <-- NOVO
     }
 
     document.addEventListener('DOMContentLoaded', initialize);
