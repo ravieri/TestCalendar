@@ -756,26 +756,25 @@
     }
 
     function getSortedEvents() {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Define a data para o início do dia (meia-noite) para garantir uma comparação justa.
+    const today = new Date();
+    // 1. Criamos uma nova data que representa o primeiro dia do mês atual.
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    firstDayOfMonth.setHours(0, 0, 0, 0); // Garante a comparação a partir da meia-noite.
 
-        // Pega todos os eventos do mapa
-        const allCurrentEvents = Array.from(allEvents.values());
+    const allCurrentEvents = Array.from(allEvents.values());
 
-        // Filtra para manter apenas os eventos cuja data é maior ou igual a hoje
-        const futureEvents = allCurrentEvents.filter(event => {
-            // Se um evento não tiver data, ele será removido para segurança
-            if (!event.effectiveDate) return false; 
-            
-            // Cria a data do evento. Adicionar 'T00:00:00' ajuda a evitar problemas com fuso horário
-            const eventDate = new Date(event.effectiveDate + 'T00:00:00');
-            
-            return eventDate >= today;
-        });
+    // Filtra para manter eventos a partir do início do mês atual.
+    const eventsFromThisMonthOnwards = allCurrentEvents.filter(event => {
+        if (!event.effectiveDate) return false;
+        
+        const eventDate = new Date(event.effectiveDate + 'T00:00:00');
+        
+        // 2. Comparamos a data do evento com o primeiro dia do mês.
+        return eventDate >= firstDayOfMonth; 
+    });
 
-        // Ordena os eventos futuros do mais próximo para o mais distante
-        return futureEvents.sort((a, b) => new Date(a.effectiveDate) - new Date(b.effectiveDate));
-    }
+    return eventsFromThisMonthOnwards.sort((a, b) => new Date(a.effectiveDate) - new Date(b.effectiveDate));
+}
 
     function rerenderAllSections() {
         const sortedEvents = getSortedEvents();
