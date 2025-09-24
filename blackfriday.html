@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Black Friday - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .traffic-light {
+            width: 25px; height: 23px; border-radius: 50%; cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 9px;
+            font-weight: 800;
+            text-shadow: 0 0 2px rgba(0,0,0,0.7);
+        }
+    </style>
+</head>
+<body class="antialiased text-gray-800">
+    <div id="page-loader" class="fixed inset-0 bg-gray-100 z-50 flex flex-col items-center justify-center">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-amber-500"></div>
+        <p class="mt-4 text-lg text-gray-600">A carregar ofertas...</p>
+    </div>
+
+    <header class="bg-white shadow-md fixed w-full top-0 z-30">
+        <div class="container mx-auto px-6 py-1 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <img src="https://placehold.co/100x40/000000/FFFFFF?text=H2BET" alt="Logo H2BET" class="h-8">
+            </div>
+            <nav class="flex space-x-2">
+                <a href="blackfriday.html" class="px-4 py-1 bg-gray-700 text-white rounded-md text-sm font-bold">BLACKFRIDAY</a>
+                <a href="index.html" class="px-4 py-1 bg-gray-200 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors">Home</a>
+                <a href="atividades.html" class="px-4 py-1 bg-gray-200 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors">Atividades</a>
+                <a href="calendario.html" class="px-4 py-1 bg-gray-200 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors">Calendario</a>
+                <a href="gantt.html" class="px-4 py-1 bg-gray-200 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors">Gantt</a>
+                <a href="promocoes.html" class="px-4 py-1 bg-gray-200 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors">Promoções</a>
+            </nav>
+        </div>
+    </header>
+
+    <div id="main-content" class="hidden">
+        <main id="main-container" class="container mx-auto px-6 py-4">
+            
+            <section id="blackfriday-events" class="mb-4">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b-2 border-amber-400 pb-2">Eventos Black Friday</h2>
+                <div id="blackfriday-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script type="module">
+    // --- INÍCIO DAS ALTERAÇÕES: INTEGRAÇÃO COM FIREBASE ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyB6zquSsTLCnJ_1WWQm8kb-HkpipU8PrTA",
+        authDomain: "marketing-esportivo.firebaseapp.com",
+        projectId: "marketing-esportivo",
+        storageBucket: "marketing-esportivo.appspot.com",
+        messagingSenderId: "53646634690",
+        appId: "1:53646634690:web:3e45f49d82d64601c0555b"
+    };
+
+    let db;
+    let allEvents = new Map();
+    const STATUS_COLORS = { red: '#ef4444', yellow: '#f59e0b', green: '#22c55e' };
+    // --- FIM DAS ALTERAÇÕES: INTEGRAÇÃO COM FIREBASE ---
+
+    async function fetchBlackFridayData() {
+        // !!! Lembre-se de colocar a URL correta da sua planilha aqui !!!
+        const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3rhQxYb78wgVMUssOAdfdaAA8x8jULNsw3PHhhg1vrjPYdfzEKR18DL-o9Z1KJEfyOs4zekgBkQb6/pub?gid=305450799&single=true&output=csv';
+        
+        try {
+            const response = await fetch(sheetUrl);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const csvText = await response.text();
+            
+            csvText.split(/\r?\n/).slice(1).forEach((row, index) => {
+                const columns = row.split(',').map(c => c.trim());
+                if (columns.length < 3 || !columns[0]) return;
+
+                const [name, date, imageUrl] = columns;
+                const dateParts = date.split('/');
+                if (dateParts.length !== 3) return;
+                const formattedDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+                
+                // Adiciona um status inicial para os semáforos
+                const event = {
+                    idEvent: `bf_${index}`,
+                    strEvent: name,
+                    dateEvent: formattedDate,
+                    logoUrl: (imageUrl && imageUrl.startsWith('http')) ? imageUrl : 'https://placehold.co/600x400/FFD700/000000?text=OFERTA',
+                    statuses: { mkt: 'red', crm: 'red', tra: 'red' } // Status padrão
+                };
+                allEvents.set(event.idEvent, event);
+            });
+        } catch (error) {
+            console.error('Erro ao buscar ou processar dados da Black Friday:', error);
+            const container = document.getElementById('blackfriday-container');
+            container.innerHTML = '<p class="text-red-600">Não foi possível carregar os eventos. Verifique a URL da planilha.</p>';
+        }
+    }
+
+    // --- NOVA FUNÇÃO PARA GERAR OS SEMÁFOROS ---
+    function getStatusTrafficLights(event) {
+        const statuses = event.statuses || { mkt: 'red', crm: 'red', tra: 'red' };
+        return ['mkt', 'crm', 'tra'].map(area => `
+            <div class="traffic-light"
+                 style="background-color: ${STATUS_COLORS[statuses[area]]};"
+                 title="${area.toUpperCase()}"
+                 data-area="${area}" data-event-id="${event.idEvent}">
+                 ${area.toUpperCase()}
+            </div>
+        `).join('');
+    }
+
+    // --- FUNÇÃO DE CARD ATUALIZADA ---
+    function createBlackFridayCard(event) {
+        const date = new Date(event.dateEvent + 'T00:00:00');
+        const formattedDate = date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '');
+
+        return `
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col">
+                <img src="${event.logoUrl}" alt="${event.strEvent}" class="w-full h-40 object-cover">
+                <div class="p-4 flex flex-col flex-grow">
+                    <h3 class="text-lg font-bold text-gray-800 truncate" title="${event.strEvent}">${event.strEvent}</h3>
+                    <p class="mt-2 text-md font-semibold text-amber-600">${formattedDate}</p>
+                    
+                    <div class="mt-4 pt-3 border-t border-gray-200 flex justify-center items-center gap-2">
+                        ${getStatusTrafficLights(event)}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderBlackFridaySection() {
+        const container = document.getElementById('blackfriday-container');
+        const sortedEvents = Array.from(allEvents.values()).sort((a, b) => new Date(a.dateEvent) - new Date(b.dateEvent));
+        container.innerHTML = sortedEvents.length > 0 ? sortedEvents.map(createBlackFridayCard).join('') : '<p class="text-gray-500">Nenhum evento de Black Friday encontrado.</p>';
+        
+        // Adiciona os listeners de clique aos semáforos recém-criados
+        attachTrafficLightListeners();
+    }
+    
+    // --- NOVAS FUNÇÕES PARA INTERAGIR COM FIREBASE ---
+    function attachTrafficLightListeners() {
+        document.querySelectorAll('.traffic-light').forEach(button => {
+            button.removeEventListener('click', handleTrafficLightClick); // Evita duplicar listeners
+            button.addEventListener('click', handleTrafficLightClick);
+        });
+    }
+
+    async function handleTrafficLightClick(e) {
+        e.stopPropagation();
+        const { eventId, area } = e.currentTarget.dataset;
+        if (!eventId || !area) return;
+
+        const event = allEvents.get(eventId);
+        const statusCycle = ['red', 'yellow', 'green'];
+        const currentStatus = (event?.statuses && event.statuses[area]) || 'red';
+        const nextStatus = statusCycle[(statusCycle.indexOf(currentStatus) + 1) % statusCycle.length];
+
+        try {
+            await setDoc(doc(db, "event_statuses", eventId), { [area]: nextStatus }, { merge: true });
+        } catch (error) {
+            console.error("FALHA AO ATUALIZAR O FAROL:", error);
+            alert(`ERRO: Não foi possível salvar a alteração.`);
+        }
+    }
+
+    function listenToEventStatus(eventId) {
+        onSnapshot(doc(db, "event_statuses", eventId), (docSnapshot) => {
+            const event = allEvents.get(eventId);
+            if (event) {
+                const savedData = docSnapshot.data() || {};
+                event.statuses = { mkt: 'red', crm: 'red', tra: 'red', ...savedData };
+
+                // Atualiza a cor do semáforo na interface
+                document.querySelectorAll(`.traffic-light[data-event-id="${eventId}"]`).forEach(light => {
+                    const area = light.dataset.area;
+                    if (area && event.statuses[area]) {
+                        light.style.backgroundColor = STATUS_COLORS[event.statuses[area]];
+                    }
+                });
+            }
+        });
+    }
+    // --- FIM DAS NOVAS FUNÇÕES ---
+
+    // --- FUNÇÃO DE INICIALIZAÇÃO ATUALIZADA ---
+    async function initialize() {
+        // Inicializa e autentica no Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        await signInAnonymously(auth);
+        db = getFirestore(app);
+
+        const header = document.querySelector('header');
+        const mainContent = document.getElementById('main-container');
+        const adjustMainContentPadding = () => {
+            mainContent.style.paddingTop = `${header.offsetHeight}px`;
+        };
+        adjustMainContentPadding();
+        window.addEventListener('resize', adjustMainContentPadding);
+
+        await fetchBlackFridayData();
+
+        // Busca o status inicial de cada evento no Firebase
+        const statusPromises = Array.from(allEvents.keys()).map(eventId => 
+            getDoc(doc(db, "event_statuses", eventId)).then(docSnapshot => {
+                const event = allEvents.get(eventId);
+                if (event && docSnapshot.exists()) {
+                    const savedData = docSnapshot.data();
+                    event.statuses = { ...event.statuses, ...savedData };
+                }
+            })
+        );
+        await Promise.all(statusPromises);
+        
+        renderBlackFridaySection();
+
+        // Começa a "escutar" por mudanças em tempo real para cada evento
+        allEvents.forEach(event => listenToEventStatus(event.idEvent));
+
+        document.getElementById('page-loader').style.display = 'none';
+        document.getElementById('main-content').classList.remove('hidden');
+    }
+
+    document.addEventListener('DOMContentLoaded', initialize);
+</script>
+
+</body>
+</html>

@@ -82,8 +82,8 @@
                 <img src="https://placehold.co/100x40/000000/FFFFFF?text=H2BET" alt="Logo H2BET" class="h-8">
             </div>
             <nav class="flex space-x-2">
-                <a href="index.html" class="px-4 py-1 bg-gray-200 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors">Home</a>
-                <a href="atividades.html" class="px-4 py-1 bg-gray-700 text-white rounded-md text-sm font-medium">Atividades</a>
+                <a href="index.html" class="px-4 py-1 bg-gray-700 text-white rounded-md text-sm font-medium">Home</a>
+                <a href="atividades.html" class="px-4 py-1 bg-gray-200 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors">Atividades</a>
 				<a href="calendario.html" class="px-4 py-1 bg-gray-200 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors">Calendario</a>
 				<a href="gantt.html" class="px-4 py-1 bg-gray-200 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors">Gantt</a>
                 <a href="promocoes.html" class="px-4 py-1 bg-gray-200 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors">Promoções</a>
@@ -224,11 +224,12 @@
     let editHistory = [];
 
     const IMPORTANT_LEAGUES = { '4351': 'https://www.thesportsdb.com/images/media/league/badge/ny47lx1701964009.png', '4331': 'https://upload.wikimedia.org/wikipedia/pt/f/f9/Bundesliga_logo_%282017%29.png', '4335': 'https://www.thesportsdb.com/images/media/league/badge/7onmyv1534768460.png', '4328': 'https://footballgroundguide.com/app/uploads/2023/12/premiereleague-logo-768x768.png', '4480': 'https://ssl.gstatic.com/onebox/media/sports/logos/YijZbE4UZ_09JrTvBU91fg_64x64.png', '4501': 'https://s3.static.brasilescola.uol.com.br/be/2022/03/taca-da-libertadores.jpg', '4724': 'https://upload.wikimedia.org/wikipedia/pt/thumb/e/e4/Conmebol_Sudamericana_logo.png/428px-Conmebol_Sudamericana_logo.png', '4443': 'https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcQfDSkxta9cASfWZmVMXvVf5L1x-CJTGLGmjYt5GyBC7V01VVoq' };
-    const TEAM_LEVELS = { '134465': 5, '134287': 5, '133729': 5, '133739': 5, '133613': 5, '133614': 5, '133668': 5, '133693': 5, '133692': 5, '133689': 5, '133702': 5, '133604': 5, '133612': 5, '133610': 5, '133732': 5, '133667': 5, '134299': 4, '134291': 4, '134284': 4, '134296': 4, '134288': 4, '134281': 4, '133616': 4, '134777': 4, '133671': 4, '133700': 4, '133699': 4, '133695': 4, '133734': 4, '133698': 4, '133696': 4, '133601': 4, '133619': 4, '133690': 4, '134282': 3, '134294': 3, '134286': 3, '134293': 3, '134285': 3, '136186': 3, '133736': 3, '133731': 3, '133735': 3, '133728': 3, '133737': 3, '133694': 3, '133701': 3, '134280': 2, '134744': 2, '134736': 2, '135887': 2, '133636': 2 };
+    const TEAM_LEVELS = { '133718': 5, /* Argentina */ '134465': 5, '134287': 5, '133729': 5, '133739': 5, '133613': 5, '133614': 5, '133668': 5, '133693': 5, '133692': 5, '133689': 5, '133702': 5, '133604': 5, '133612': 5, '133610': 5, '133732': 5, '133667': 5, '134299': 4, '134291': 4, '134284': 4, '134296': 4, '134288': 4, '134281': 4, '133616': 4, '134777': 4, '133671': 4, '133700': 4, '133699': 4, '133695': 4, '133734': 4, '133698': 4, '133696': 4, '133601': 4, '133619': 4, '133690': 4, '134282': 3, '134294': 3, '134286': 3, '134293': 3, '134285': 3, '136186': 3, '133736': 3, '133731': 3, '133735': 3, '133728': 3, '133737': 3, '133694': 3, '133701': 3, '134280': 2, '134744': 2, '134736': 2, '135887': 2, '133636': 2 };
     const MAIN_LEAGUE_IDS = ['4351', '4331', '4335', '4328', '4480', '4501', '4443', '4724'];
     const FOOTBALL_TEAM_IDS = Object.keys(TEAM_LEVELS);
     const UFC_LEAGUE_ID = '4443';
     const GALO_ID = '134299';
+    const ARGENTINA_ID = '133718';
     const STATUS_COLORS = { red: '#ef4444', yellow: '#f59e0b', green: '#22c55e' };
     const ESPORTS_IMAGES = {
         'LOL': 'https://cdn1.epicgames.com/offer/24b9b5e323bc40eea252a10cdd3b2f10/EGS_LeagueofLegends_RiotGames_S1_2560x1440-80471666c140f790f28dff68d72c384b',
@@ -756,25 +757,23 @@
     }
 
     function getSortedEvents() {
-    const today = new Date();
-    // 1. Criamos uma nova data que representa o primeiro dia do mês atual.
-    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    firstDayOfMonth.setHours(0, 0, 0, 0); // Garante a comparação a partir da meia-noite.
+        const today = new Date();
+        const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        firstDayOfMonth.setHours(0, 0, 0, 0);
 
-    const allCurrentEvents = Array.from(allEvents.values());
+        const allCurrentEvents = Array.from(allEvents.values());
 
-    // Filtra para manter eventos a partir do início do mês atual.
-    const eventsFromThisMonthOnwards = allCurrentEvents.filter(event => {
-        if (!event.effectiveDate) return false;
-        
-        const eventDate = new Date(event.effectiveDate + 'T00:00:00');
-        
-        // 2. Comparamos a data do evento com o primeiro dia do mês.
-        return eventDate >= firstDayOfMonth; 
-    });
+        const eventsFromThisMonthOnwards = allCurrentEvents.filter(event => {
+            if (!event.effectiveDate) return false;
+            
+            const eventDate = new Date(event.effectiveDate + 'T00:00:00');
+            
+            return eventDate >= firstDayOfMonth;
+        });
 
-    return eventsFromThisMonthOnwards.sort((a, b) => new Date(a.effectiveDate) - new Date(b.effectiveDate));
-}
+        return eventsFromThisMonthOnwards.sort((a, b) => new Date(a.effectiveDate) - new Date(b.effectiveDate));
+    }
+
 
     function rerenderAllSections() {
         const sortedEvents = getSortedEvents();
@@ -853,7 +852,7 @@
         const matchesToDisplayMap = new Map();
 
         relevantEvents.forEach(event => {
-            if (event.idHomeTeam === GALO_ID || event.idAwayTeam === GALO_ID) {
+            if (event.idHomeTeam === GALO_ID || event.idAwayTeam === GALO_ID || event.idHomeTeam === ARGENTINA_ID || event.idAwayTeam === ARGENTINA_ID) {
                 matchesToDisplayMap.set(event.idEvent, event);
             }
         });
