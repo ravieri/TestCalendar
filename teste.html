@@ -158,30 +158,51 @@
                 return [];
             }
         }
-        
-        // ===== FUNÇÃO MODIFICADA PARA ADICIONAR O EMBLEMA =====
+
+        // ===== FUNÇÃO MODIFICADA PARA ALTERAR AS CORES DOS CARDS =====
         function createEventCard(event) {
+            // Verifica primeiro se o evento é do "Galo"
+            const fullText = (event.data + event.informacoes + event.diaDaSemana + event.observacoes).toUpperCase();
+            const hasGalo = fullText.includes('GALO');
+
+            // Define os conjuntos de cores
+            let theme = {
+                cardBg: 'bg-white',
+                titleText: 'text-gray-800',
+                dateText: 'text-indigo-600',
+                dayText: 'text-gray-600',
+                obsBg: 'bg-gray-100',
+                obsText: 'text-gray-500'
+            };
+
+            if (hasGalo) {
+                theme = {
+                    cardBg: 'bg-gray-800', // Fundo cinza escuro
+                    titleText: 'text-white', // Título branco
+                    dateText: 'text-indigo-400', // Data em índigo mais claro
+                    dayText: 'text-gray-300', // Dia da semana em cinza claro
+                    obsBg: 'bg-gray-700', // Fundo da observação em cinza médio
+                    obsText: 'text-gray-300' // Texto da observação em cinza claro
+                };
+            }
+
             const cardWrapper = document.createElement('div');
-            // A classe 'relative' é necessária para posicionar o emblema dentro do card
-            cardWrapper.className = "relative bg-white p-4 rounded-lg shadow-md border-l-4 border-gray-300 hover:shadow-xl transition-shadow";
+            // A classe 'relative' é para posicionar o emblema
+            cardWrapper.className = `relative p-4 rounded-lg shadow-md border-l-4 border-gray-300 hover:shadow-xl transition-shadow ${theme.cardBg}`;
             
-            // Conteúdo principal do card
             cardWrapper.innerHTML = `
-                <p class="font-bold text-gray-800">${event.informacoes}</p>
-                <p class="text-sm text-indigo-600 font-semibold mt-2"><i class="far fa-calendar-alt mr-2"></i>${event.data}</p>
-                <p class="text-sm text-gray-600"><i class="far fa-clock mr-2"></i>${event.diaDaSemana}</p>
-                ${event.observacoes && event.observacoes !== 'N/A' ? `<p class="text-sm text-gray-500 mt-1 bg-gray-100 p-2 rounded-md"><i class="fas fa-info-circle mr-2"></i>${event.observacoes}</p>` : ''}
+                <p class="font-bold ${theme.titleText}">${event.informacoes}</p>
+                <p class="text-sm font-semibold mt-2 ${theme.dateText}"><i class="far fa-calendar-alt mr-2"></i>${event.data}</p>
+                <p class="text-sm ${theme.dayText}"><i class="far fa-clock mr-2"></i>${event.diaDaSemana}</p>
+                ${event.observacoes && event.observacoes !== 'N/A' ? `<p class="text-sm mt-1 p-2 rounded-md ${theme.obsBg} ${theme.obsText}"><i class="fas fa-info-circle mr-2"></i>${event.observacoes}</p>` : ''}
             `;
 
-            // Verifica se a palavra "GALO" existe em qualquer um dos campos do evento
-            const fullText = (event.data + event.informacoes + event.diaDaSemana + event.observacoes).toUpperCase();
-            if (fullText.includes('GALO')) {
+            if (hasGalo) {
                 const emblem = document.createElement('img');
-                emblem.src = 'galou.png';
+                emblem.src = 'galou.png'; // Usando o nome corrigido
                 emblem.alt = 'Emblema Galo';
-                // Classes do Tailwind para posicionar no canto superior direito
-                emblem.className = 'absolute top-2 right-2 w-8 h-8'; // Você pode ajustar o tamanho (w-8 h-8)
-                cardWrapper.appendChild(emblem); // Adiciona o emblema ao card
+                emblem.className = 'absolute top-2 right-2 w-8 h-8';
+                cardWrapper.appendChild(emblem);
             }
 
             return cardWrapper;
