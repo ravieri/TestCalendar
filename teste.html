@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendário de Eventos - Detalhado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .ver-mais-button { cursor: pointer; }
+    </style>
+</head>
+<body class="antialiased text-gray-800">
+    <div id="page-loader" class="fixed inset-0 bg-gray-100 z-50 flex flex-col items-center justify-center">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-500"></div>
+        <p class="mt-4 text-lg text-gray-600">A carregar o calendário...</p>
+    </div>
+
+    <header class="bg-white shadow-md fixed w-full top-0 z-30">
+        <div class="container mx-auto px-6 py-1 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <img src="https://placehold.co/100x40/000000/FFFFFF?text=H2BET" alt="Logo H2BET" class="h-8">
+            </div>
+            <nav class="flex space-x-2">
+                <a href="blackfriday.html" class="px-4 py-1 bg-amber-400 text-gray-800 rounded-md text-sm font-bold hover:bg-amber-500 transition-colors">BLACKFRIDAY</a>
+                <a href="index.html" class="px-4 py-1 bg-gray-200 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors">Home</a>
+                <a href="teste.html" class="px-4 py-1 bg-indigo-600 text-white rounded-md text-sm font-bold hover:bg-indigo-700 transition-colors">Detalhado</a>
+                <a href="atividades.html" class="px-4 py-1 bg-gray-200 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors">Atividades</a>
+                <a href="calendario.html" class="px-4 py-1 bg-gray-200 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors">Calendario</a>
+                <a href="gantt.html" class="px-4 py-1 bg-gray-200 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors">Gantt</a>
+                <a href="promocoes.html" class="px-4 py-1 bg-gray-200 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors">Promoções</a>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main-container" class="container mx-auto px-6 py-4 hidden">
+        <div class="space-y-10">
+            <section id="this-week-section">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-gray-800 border-l-4 border-indigo-500 pl-3">Semana Atual</h2>
+                </div>
+                <div id="this-week-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+                <div class="w-full flex justify-center mt-4">
+                    <button class="ver-mais-button hidden bg-indigo-100 text-indigo-700 font-semibold py-2 px-5 rounded-lg hover:bg-indigo-200 transition-colors" data-section="this-week">
+                        Ver Mais
+                    </button>
+                </div>
+            </section>
+
+            <section id="next-week-section">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-gray-800 border-l-4 border-blue-500 pl-3">Próxima Semana</h2>
+                </div>
+                <div id="next-week-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+                <div class="w-full flex justify-center mt-4">
+                    <button class="ver-mais-button hidden bg-indigo-100 text-indigo-700 font-semibold py-2 px-5 rounded-lg hover:bg-indigo-200 transition-colors" data-section="next-week">
+                        Ver Mais
+                    </button>
+                </div>
+            </section>
+
+            <section id="2-weeks-out-section">
+                <div class="flex justify-between items-center mb-4">
+                     <h2 class="text-2xl font-bold text-gray-800 mb-4 border-l-4 border-teal-500 pl-3">Daqui 2 Semanas</h2>
+                </div>
+                <div id="2-weeks-out-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+                <div class="w-full flex justify-center mt-4">
+                    <button class="ver-mais-button hidden bg-indigo-100 text-indigo-700 font-semibold py-2 px-5 rounded-lg hover:bg-indigo-200 transition-colors" data-section="2-weeks-out">
+                        Ver Mais
+                    </button>
+                </div>
+            </section>
+
+            <section id="3-weeks-out-section">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4 border-l-4 border-purple-500 pl-3">Daqui 3 Semanas</h2>
+                </div>
+                <div id="3-weeks-out-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+                <div class="w-full flex justify-center mt-4">
+                    <button class="ver-mais-button hidden bg-indigo-100 text-indigo-700 font-semibold py-2 px-5 rounded-lg hover:bg-indigo-200 transition-colors" data-section="3-weeks-out">
+                        Ver Mais
+                    </button>
+                </div>
+            </section>
+
+            <section id="next-month-section">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4 border-l-4 border-orange-500 pl-3">Daqui 1 Mês</h2>
+                </div>
+                <div id="next-month-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+                <div class="w-full flex justify-center mt-4">
+                    <button class="ver-mais-button hidden bg-indigo-100 text-indigo-700 font-semibold py-2 px-5 rounded-lg hover:bg-indigo-200 transition-colors" data-section="next-month">
+                        Ver Mais
+                    </button>
+                </div>
+            </section>
+
+            <section id="future-section">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4 border-l-4 border-gray-400 pl-3">Eventos Futuros</h2>
+                </div>
+                <div id="future-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+                <div class="w-full flex justify-center mt-4">
+                    <button class="ver-mais-button hidden bg-indigo-100 text-indigo-700 font-semibold py-2 px-5 rounded-lg hover:bg-indigo-200 transition-colors" data-section="future">
+                        Ver Mais
+                    </button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script type="module">
+        const ITEMS_PER_PAGE = 8;
+        const verMaisState = {};
+
+        function parseCustomDateString(dateString) {
+            const months = { 'janeiro': 0, 'fevereiro': 1, 'março': 2, 'abril': 3, 'maio': 4, 'junho': 5, 'julho': 6, 'agosto': 7, 'setembro': 8, 'outubro': 9, 'novembro': 10, 'dezembro': 11 };
+            const currentYear = new Date().getFullYear();
+            const dates = [];
+            const monthMatch = dateString.match(/de (\w+)/);
+            if (!monthMatch) return dates;
+            const monthName = monthMatch[1].toLowerCase();
+            const monthIndex = months[monthName];
+            if (monthIndex === undefined) return dates;
+            const dayNumbers = (dateString.match(/\d+/g) || []).map(n => parseInt(n, 10));
+            if (dayNumbers.length === 0) return dates;
+            if (dateString.includes('-')) {
+                const [startDay, endDay, ...restDays] = dayNumbers;
+                if (startDay && endDay) {
+                    for (let day = startDay; day <= endDay; day++) {
+                        dates.push(new Date(currentYear, monthIndex, day));
+                    }
+                }
+                restDays.forEach(day => dates.push(new Date(currentYear, monthIndex, day)));
+            } else {
+                dayNumbers.forEach(day => dates.push(new Date(currentYear, monthIndex, day)));
+            }
+            return dates;
+        }
+
+        async function fetchCalendarData() {
+            const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3rhQxYb78wgVMUssOAdfdaAA8x8jULNsw3PHhhg1vrjPYdfzEKR18DL-o9Z1KJEfyOs4zekgBkQb6/pub?gid=1566818085&single=true&output=csv';
+            try {
+                const response = await fetch(sheetUrl);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const csvText = await response.text();
+                const rows = csvText.split(/\r?\n/).slice(1);
+                return rows.map(row => {
+                    const columns = row.split(',');
+                    return { data: (columns[0] || '').trim(), informacoes: (columns[1] || '').trim(), diaDaSemana: (columns[2] || '').trim(), observacoes: (columns[3] || '').trim() };
+                }).filter(event => event.data && event.informacoes);
+            } catch (error) {
+                console.error('Erro ao buscar dados da planilha:', error);
+                return [];
+            }
+        }
+
+        function createEventCard(event) {
+            const cardWrapper = document.createElement('div');
+            cardWrapper.className = "bg-white p-4 rounded-lg shadow-md border-l-4 border-gray-300 hover:shadow-xl transition-shadow";
+            cardWrapper.innerHTML = `
+                <p class="font-bold text-gray-800">${event.informacoes}</p>
+                <p class="text-sm text-indigo-600 font-semibold mt-2"><i class="far fa-calendar-alt mr-2"></i>${event.data}</p>
+                <p class="text-sm text-gray-600"><i class="far fa-clock mr-2"></i>${event.diaDaSemana}</p>
+                ${event.observacoes && event.observacoes !== 'N/A' ? `<p class="text-sm text-gray-500 mt-1 bg-gray-100 p-2 rounded-md"><i class="fas fa-info-circle mr-2"></i>${event.observacoes}</p>` : ''}
+            `;
+            return cardWrapper;
+        }
+        
+        function renderCalendar(events) {
+            const sections = {
+                'this-week': { container: document.getElementById('this-week-container'), cards: [] },
+                'next-week': { container: document.getElementById('next-week-container'), cards: [] },
+                '2-weeks-out': { container: document.getElementById('2-weeks-out-container'), cards: [] },
+                '3-weeks-out': { container: document.getElementById('3-weeks-out-container'), cards: [] },
+                'next-month': { container: document.getElementById('next-month-container'), cards: [] },
+                'future': { container: document.getElementById('future-container'), cards: [] },
+            };
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const getWeekBoundaries = (weekOffset) => {
+                const start = new Date(today);
+                start.setDate(today.getDate() - today.getDay() + (7 * weekOffset));
+                const end = new Date(start);
+                end.setDate(start.getDate() + 6);
+                return { start, end };
+            };
+
+            const boundaries = {
+                'this-week': getWeekBoundaries(0),
+                'next-week': getWeekBoundaries(1),
+                '2-weeks-out': getWeekBoundaries(2),
+                '3-weeks-out': getWeekBoundaries(3),
+            };
+            
+            const monthBoundaryStart = new Date(boundaries['3-weeks-out'].end);
+            monthBoundaryStart.setDate(monthBoundaryStart.getDate() + 1);
+            const monthBoundaryEnd = new Date(today);
+            monthBoundaryEnd.setDate(today.getDate() + 30);
+
+            events.forEach(event => {
+                const eventDates = parseCustomDateString(event.data);
+                const futureEventDates = eventDates.filter(d => d >= today);
+                if (futureEventDates.length === 0) return; 
+
+                const cardElement = createEventCard(event);
+                let placed = false;
+
+                const checkAndPlace = (sectionKey, boundary) => {
+                    if (futureEventDates.some(d => d >= boundary.start && d <= boundary.end)) {
+                        sections[sectionKey].cards.push(cardElement);
+                        placed = true;
+                    }
+                };
+                
+                checkAndPlace('this-week', boundaries['this-week']);
+                if (placed) return;
+                checkAndPlace('next-week', boundaries['next-week']);
+                if (placed) return;
+                checkAndPlace('2-weeks-out', boundaries['2-weeks-out']);
+                if (placed) return;
+                checkAndPlace('3-weeks-out', boundaries['3-weeks-out']);
+                if (placed) return;
+
+                if (futureEventDates.some(d => d >= monthBoundaryStart && d <= monthBoundaryEnd)) {
+                    sections['next-month'].cards.push(cardElement);
+                } else if (futureEventDates.some(d => d > monthBoundaryEnd)) {
+                    sections['future'].cards.push(cardElement);
+                }
+            });
+
+            for (const key in sections) {
+                const section = sections[key];
+                const button = document.querySelector(`.ver-mais-button[data-section="${key}"]`);
+
+                if (section.cards.length === 0) {
+                    section.container.innerHTML = '<p class="text-gray-500 col-span-full">Nenhum evento neste período.</p>';
+                    continue;
+                }
+
+                if (section.cards.length > ITEMS_PER_PAGE) {
+                    verMaisState[key] = { 
+                        allCards: section.cards,
+                        isExpanded: false
+                    };
+                    const initialCards = section.cards.slice(0, ITEMS_PER_PAGE);
+                    initialCards.forEach(card => section.container.appendChild(card));
+                    button.classList.remove('hidden');
+                } else {
+                    section.cards.forEach(card => section.container.appendChild(card));
+                }
+            }
+        }
+        
+        async function initialize() {
+            const header = document.querySelector('header');
+            const mainContent = document.getElementById('main-container');
+            const adjustMainContentPadding = () => {
+                mainContent.style.paddingTop = `${header.offsetHeight + 24}px`;
+            };
+            adjustMainContentPadding();
+            window.addEventListener('resize', adjustMainContentPadding);
+
+            mainContent.addEventListener('click', (e) => {
+                const button = e.target.closest('.ver-mais-button');
+                if (!button) return;
+
+                const sectionKey = button.dataset.section;
+                const state = verMaisState[sectionKey];
+                const container = document.getElementById(`${sectionKey}-container`);
+
+                if (!state || !container) return;
+
+                state.isExpanded = !state.isExpanded;
+                container.innerHTML = '';
+
+                if (state.isExpanded) {
+                    // MODO EXPANDIDO
+                    state.allCards.forEach(card => container.appendChild(card));
+                    button.textContent = 'Ver Menos';
+                    // Altera a cor para vermelho
+                    button.classList.remove('bg-indigo-100', 'text-indigo-700', 'hover:bg-indigo-200');
+                    button.classList.add('bg-red-100', 'text-red-700', 'hover:bg-red-200');
+                } else {
+                    // MODO ENCOLHIDO
+                    const initialCards = state.allCards.slice(0, ITEMS_PER_PAGE);
+                    initialCards.forEach(card => container.appendChild(card));
+                    button.textContent = 'Ver Mais';
+                    // Volta para a cor índigo
+                    button.classList.remove('bg-red-100', 'text-red-700', 'hover:bg-red-200');
+                    button.classList.add('bg-indigo-100', 'text-indigo-700', 'hover:bg-indigo-200');
+                }
+            });
+            
+            const events = await fetchCalendarData();
+            renderCalendar(events);
+            
+            document.getElementById('page-loader').style.display = 'none';
+            mainContent.classList.remove('hidden');
+        }
+
+        document.addEventListener('DOMContentLoaded', initialize);
+    </script>
+</body>
+</html>
