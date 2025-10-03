@@ -159,13 +159,13 @@
             }
         }
 
-        // ===== FUNÇÃO MODIFICADA PARA ALTERAR AS CORES DOS CARDS =====
+        // ===== FUNÇÃO MODIFICADA PARA ALTERAR AS CORES DOS CARDS (GALO E LOUD) =====
         function createEventCard(event) {
-            // Verifica primeiro se o evento é do "Galo"
             const fullText = (event.data + event.informacoes + event.diaDaSemana + event.observacoes).toUpperCase();
             const hasGalo = fullText.includes('GALO');
+            const hasLoud = fullText.includes('LOUD'); // Verifica se tem "LOUD"
 
-            // Define os conjuntos de cores
+            // Define o tema padrão
             let theme = {
                 cardBg: 'bg-white',
                 titleText: 'text-gray-800',
@@ -176,18 +176,28 @@
             };
 
             if (hasGalo) {
+                // Tema para "GALO"
                 theme = {
-                    cardBg: 'bg-gray-800', // Fundo cinza escuro
+                    cardBg: 'bg-gray-800',
+                    titleText: 'text-white',
+                    dateText: 'text-indigo-400',
+                    dayText: 'text-gray-300',
+                    obsBg: 'bg-gray-700',
+                    obsText: 'text-gray-300'
+                };
+            } else if (hasLoud) {
+                // Tema para "LOUD"
+                theme = {
+                    cardBg: 'bg-green-800', // Fundo verde escuro
                     titleText: 'text-white', // Título branco
-                    dateText: 'text-indigo-400', // Data em índigo mais claro
-                    dayText: 'text-gray-300', // Dia da semana em cinza claro
-                    obsBg: 'bg-gray-700', // Fundo da observação em cinza médio
-                    obsText: 'text-gray-300' // Texto da observação em cinza claro
+                    dateText: 'text-green-300', // Data em verde claro
+                    dayText: 'text-gray-200', // Dia da semana em cinza claro
+                    obsBg: 'bg-green-700', // Fundo da observação em verde médio
+                    obsText: 'text-gray-200' // Texto da observação em cinza claro
                 };
             }
 
             const cardWrapper = document.createElement('div');
-            // A classe 'relative' é para posicionar o emblema
             cardWrapper.className = `relative p-4 rounded-lg shadow-md border-l-4 border-gray-300 hover:shadow-xl transition-shadow ${theme.cardBg}`;
             
             cardWrapper.innerHTML = `
@@ -197,13 +207,16 @@
                 ${event.observacoes && event.observacoes !== 'N/A' ? `<p class="text-sm mt-1 p-2 rounded-md ${theme.obsBg} ${theme.obsText}"><i class="fas fa-info-circle mr-2"></i>${event.observacoes}</p>` : ''}
             `;
 
+            // Adiciona o emblema apenas se for "GALO"
             if (hasGalo) {
                 const emblem = document.createElement('img');
-                emblem.src = 'galou.png'; // Usando o nome corrigido
+                emblem.src = 'galou.png';
                 emblem.alt = 'Emblema Galo';
                 emblem.className = 'absolute top-2 right-2 w-8 h-8';
                 cardWrapper.appendChild(emblem);
             }
+            
+            // Se precisar de um emblema para a LOUD, o código seria adicionado aqui.
 
             return cardWrapper;
         }
