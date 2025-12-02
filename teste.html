@@ -149,9 +149,34 @@
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const csvText = await response.text();
                 const rows = csvText.split(/\r?\n/).slice(1);
+                
                 return rows.map(row => {
+                    // Divide a linha por vírgulas
                     const columns = row.split(',');
-                    return { data: (columns[0] || '').trim(), informacoes: (columns[1] || '').trim(), diaDaSemana: (columns[2] || '').trim(), observacoes: (columns[3] || '').trim() };
+
+                    // Colunas fixas (0, 1 e 2)
+                    const data = (columns[0] || '').trim();
+                    const informacoes = (columns[1] || '').trim();
+                    const diaDaSemana = (columns[2] || '').trim();
+
+                    // TRUQUE: Pega da coluna 3 até o final e junta tudo de volta com vírgula
+                    let observacoesRaw = columns.slice(3).join(',');
+
+                    // Remove aspas duplas que o CSV adiciona automaticamente em textos com vírgula
+                    // (Ex: "Texto, texto" vira Texto, texto)
+                    let observacoes = observacoesRaw.trim();
+                    if (observacoes.startsWith('"') && observacoes.endsWith('"')) {
+                        observacoes = observacoes.substring(1, observacoes.length - 1);
+                    }
+                    // Remove aspas duplas duplicadas (escape do CSV)
+                    observacoes = observacoes.replace(/""/g, '"');
+
+                    return { 
+                        data: data, 
+                        informacoes: informacoes, 
+                        diaDaSemana: diaDaSemana, 
+                        observacoes: observacoes 
+                    };
                 }).filter(event => event.data && event.informacoes);
             } catch (error) {
                 console.error('Erro ao buscar dados da planilha:', error);
