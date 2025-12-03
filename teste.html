@@ -119,26 +119,49 @@
 
         function parseCustomDateString(dateString) {
             const months = { 'janeiro': 0, 'fevereiro': 1, 'março': 2, 'abril': 3, 'maio': 4, 'junho': 5, 'julho': 6, 'agosto': 7, 'setembro': 8, 'outubro': 9, 'novembro': 10, 'dezembro': 11 };
-            const currentYear = new Date().getFullYear();
+            
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            
+            // Define "Hoje" zerando as horas para comparação justa
+            const today = new Date(now);
+            today.setHours(0, 0, 0, 0);
+
             const dates = [];
             const monthMatch = dateString.match(/de (\w+)/);
             if (!monthMatch) return dates;
+            
             const monthName = monthMatch[1].toLowerCase();
             const monthIndex = months[monthName];
             if (monthIndex === undefined) return dates;
+            
             const dayNumbers = (dateString.match(/\d+/g) || []).map(n => parseInt(n, 10));
             if (dayNumbers.length === 0) return dates;
+
+            // Função auxiliar para criar a data com a lógica de "Ano Seguinte"
+            const createSmartDate = (day) => {
+                let date = new Date(currentYear, monthIndex, day);
+                
+                // A MÁGICA ACONTECE AQUI:
+                // Se a data montada for anterior a hoje, assume-se que é do ano que vem.
+                if (date < today) {
+                    date.setFullYear(currentYear + 1);
+                }
+                return date;
+            };
+
             if (dateString.includes('-')) {
                 const [startDay, endDay, ...restDays] = dayNumbers;
                 if (startDay && endDay) {
                     for (let day = startDay; day <= endDay; day++) {
-                        dates.push(new Date(currentYear, monthIndex, day));
+                        dates.push(createSmartDate(day));
                     }
                 }
-                restDays.forEach(day => dates.push(new Date(currentYear, monthIndex, day)));
+                restDays.forEach(day => dates.push(createSmartDate(day)));
             } else {
-                dayNumbers.forEach(day => dates.push(new Date(currentYear, monthIndex, day)));
+                dayNumbers.forEach(day => dates.push(createSmartDate(day)));
             }
+            
             return dates;
         }
 
