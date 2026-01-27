@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sports Calendar - Fev 2026</title>
+    <style>
+        :root {
+            --bg-body: #121212;
+            --bg-panel: #1e1e1e;
+            --bg-card: #252525;
+            --accent: #00ff88; /* Verde Neon para Datas/Times */
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+            --tier-s: #ffd700; /* Dourado */
+            --tier-a: #00d4ff; /* Azul Ciano */
+            --badge-bg: #333;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        
+        body { background-color: var(--bg-body); color: var(--text-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+        /* HEADER */
+        header {
+            background-color: var(--bg-panel);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+        }
+        .logo { font-weight: 800; font-size: 1.5rem; letter-spacing: -1px; }
+        .logo span { color: var(--accent); }
+        .date-display { background: #333; padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; color: #ccc; }
+
+        /* LAYOUT GRID - 2 COLUNAS AGORA */
+        .container { display: grid; grid-template-columns: 260px 1fr; height: 100%; }
+
+        /* SIDEBAR ESQUERDA - NAVEGAÇÃO */
+        .sidebar-left { background-color: var(--bg-panel); padding: 20px; border-right: 1px solid #333; display: flex; flex-direction: column; }
+        .nav-item {
+            display: flex; align-items: center; padding: 14px; color: var(--text-muted); text-decoration: none;
+            border-radius: 8px; margin-bottom: 8px; transition: 0.2s; cursor: pointer; font-weight: 500;
+        }
+        .nav-item:hover, .nav-item.active { background-color: #333; color: white; border-left: 3px solid var(--accent); }
+        .nav-item i { margin-right: 10px; width: 20px; text-align: center; }
+        .section-title { font-size: 0.75rem; text-transform: uppercase; color: #666; margin: 25px 0 10px 5px; font-weight: 800; letter-spacing: 1px; }
+
+        /* FEED CENTRAL - CALENDÁRIO */
+        .main-feed { padding: 30px; overflow-y: auto; background-color: var(--bg-body); }
+        
+        .hero-banner {
+            background: linear-gradient(135deg, #000000 0%, #1a252f 100%);
+            border-radius: 12px; padding: 30px; margin-bottom: 30px;
+            border: 1px solid var(--tier-s); position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .hero-banner h2 { color: var(--tier-s); font-size: 2rem; margin-bottom: 10px; }
+        .hero-tags { position: absolute; top: 20px; right: 20px; background: var(--tier-s); color: black; padding: 5px 12px; font-size: 0.75rem; font-weight: 800; border-radius: 4px; text-transform: uppercase; }
+
+        /* CARD DE JOGO (AGENDA) */
+        .event-card {
+            background-color: var(--bg-card); border-radius: 10px; padding: 20px; margin-bottom: 15px;
+            display: grid; grid-template-columns: 80px 1fr auto; gap: 20px; align-items: center;
+            border-left: 4px solid transparent; transition: transform 0.2s, background-color 0.2s;
+        }
+        .event-card:hover { transform: translateX(5px); background-color: #2e2e2e; }
+        
+        /* Cores de Borda por Tier */
+        .event-card.tier-s { border-left-color: var(--tier-s); }
+        .event-card.tier-a { border-left-color: var(--tier-a); }
+        .event-card.tier-b { border-left-color: #555; }
+
+        /* Coluna Data */
+        .date-box { 
+            text-align: center; background: #333; padding: 10px; border-radius: 8px; 
+            display: flex; flex-direction: column; justify-content: center;
+        }
+        .date-day { font-size: 1.5rem; font-weight: 800; color: white; line-height: 1; }
+        .date-month { font-size: 0.75rem; color: var(--accent); text-transform: uppercase; font-weight: bold; margin-top: 2px;}
+        .date-time { font-size: 0.8rem; color: #aaa; margin-top: 5px; border-top: 1px solid #444; padding-top: 5px; }
+
+        /* Coluna Infos */
+        .match-info { display: flex; flex-direction: column; justify-content: center; }
+        .league-name { font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 8px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .teams { font-size: 1.4rem; font-weight: 700; color: white; margin-bottom: 8px; }
+        .venue-info { font-size: 0.9rem; color: #888; display: flex; align-items: center; gap: 6px; }
+
+        /* Coluna Tags/Contexto */
+        .context-tags { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+        .tag { 
+            font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; font-weight: 600; 
+            background: var(--badge-bg); color: #ccc; white-space: nowrap;
+        }
+        .tag.highlight { background: rgba(0, 255, 136, 0.15); color: var(--accent); border: 1px solid var(--accent); }
+        .tag.urgent { background: rgba(255, 71, 87, 0.15); color: #ff4757; border: 1px solid #ff4757; }
+        .tag.gold { background: rgba(255, 215, 0, 0.15); color: var(--tier-s); border: 1px solid var(--tier-s); }
+
+        /* MOBILE */
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr; }
+            .sidebar-left { display: none; }
+            .event-card { grid-template-columns: 60px 1fr; grid-template-rows: auto auto; }
+            .context-tags { grid-column: 1 / -1; flex-direction: row; justify-content: flex-start; margin-top: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">CALENDÁRIO <span>FEV/26</span></div>
+    <div class="date-display">Fevereiro 2026 • Inteligência Esportiva</div>
+</header>
+
+<div class="container">
+    <aside class="sidebar-left">
+        <div class="section-title">Filtros de Visão</div>
+        <div class="nav-item active" onclick="filterEvents('all')">📅 Visão Geral</div>
+        <div class="nav-item" onclick="filterEvents('galo')">🐔 Agenda do Galo</div>
+        
+        <div class="section-title">Por Categoria</div>
+        <div class="nav-item" onclick="filterEvents('br')">🇧🇷 Futebol Brasileiro</div>
+        <div class="nav-item" onclick="filterEvents('world')">🌍 Internacional</div>
+        <div class="nav-item" onclick="filterEvents('us')">🏈 US & Esportes</div>
+        <div class="nav-item" onclick="filterEvents('winter')">❄️ Olimpíadas Inverno</div>
+    </aside>
+
+    <main class="main-feed" id="feed">
+        </main>
+</div>
+
+<script>
+    // --- DATABASE (Intelligence Report Fev 2026) ---
+    // Estrutura focada em DATA, LOCAL e CONTEXTO
+    const eventsDB = [
+        // GALO
+        {
+            id: 1, category: 'galo', tier: 's', 
+            day: '04', time: '19:00', league: 'Brasileirão Série A • 2ª Rodada', 
+            match: 'RB Bragantino vs Atlético-MG', 
+            venue: 'Nabi Abi Chedid, Bragança',
+            tags: ['Série A', 'Visitante']
+        },
+        {
+            id: 2, category: 'galo', tier: 'a', 
+            day: '07', time: '18:30', league: 'Campeonato Mineiro • 7ª Rodada', 
+            match: 'Atlético-MG vs Athletic Club', 
+            venue: 'Arena MRV, Belo Horizonte',
+            tags: ['Casa', 'Reta Final Grupos']
+        },
+        {
+            id: 3, category: 'us', tier: 's', 
+            day: '08', time: '20:30', league: 'NFL • Super Bowl LX', 
+            match: 'Kansas City Chiefs vs San Francisco 49ers', 
+            venue: 'Levi\'s Stadium, Santa Clara',
+            tags: ['Final Única', 'Global Event', 'Show do Intervalo']
+        },
+        {
+            id: 4, category: 'galo', tier: 'b', 
+            day: '11', time: '20:00', league: 'Brasileirão Série A • 3ª Rodada', 
+            match: 'Atlético-MG vs Remo', 
+            venue: 'Arena MRV, Belo Horizonte',
+            tags: ['Casa', 'Must Win']
+        },
+        {
+            id: 5, category: 'winter', tier: 'b', 
+            day: '12', time: '10:00', league: 'Olimpíadas de Inverno 2026', 
+            match: 'Hóquei: Canadá vs EUA', 
+            venue: 'Milano Cortina, Itália',
+            tags: ['Clássico', 'Fase de Grupos']
+        },
+        {
+            id: 6, category: 'galo', tier: 'a', 
+            day: '14', time: '16:30', league: 'Campeonato Mineiro • 8ª Rodada', 
+            match: 'Itabirito vs Atlético-MG', 
+            venue: 'Nova Lima, MG',
+            tags: ['Decisão Fase Grupos', 'Vale Liderança']
+        },
+        {
+            id: 7, category: 'world', tier: 's', 
+            day: '17', time: '17:00', league: 'UEFA Champions League • Playoffs', 
+            match: 'PSG vs Arsenal', 
+            venue: 'Parc des Princes, Paris',
+            tags: ['Mata-Mata (Ida)', 'Elite Europeia']
+        },
+        {
+            id: 8, category: 'br', tier: 'a', 
+            day: '18', time: '21:30', league: 'Libertadores 2026 • Pré-Fase 2', 
+            match: 'Botafogo vs Bolívar', 
+            venue: 'Nilton Santos, Rio',
+            tags: ['Eliminatório (Ida)', 'Pressão']
+        },
+        {
+            id: 9, category: 'br', tier: 's', 
+            day: '19', time: '21:30', league: 'Recopa Sul-Americana • Final (Ida)', 
+            match: 'Lanús (ARG) vs Flamengo', 
+            venue: 'La Fortaleza, Argentina',
+            tags: ['Valendo Taça', 'Continental']
+        },
+        {
+            id: 10, category: 'galo', tier: 's', 
+            day: '25', time: '21:30', league: 'Brasileirão Série A • 4ª Rodada', 
+            match: 'Grêmio vs Atlético-MG', 
+            venue: 'Arena do Grêmio, RS',
+            tags: ['Clássico Nacional', 'Teste de Fogo']
+        }
+    ];
+
+    const feed = document.getElementById('feed');
+    
+    function renderEvents(filterType) {
+        feed.innerHTML = '';
+        
+        // Banner Destaque apenas na Home
+        if(filterType === 'all') {
+            feed.innerHTML += `
+            <div class="hero-banner">
+                <span class="hero-tags">DESTAQUE DO MÊS</span>
+                <h2>SUPER BOWL LX</h2>
+                <p style="color:#ccc; font-size: 1.1rem;">Domingo, 08 de Fevereiro • 20:30</p>
+                <div style="margin-top: 15px; display:flex; gap:10px;">
+                    <span class="tag gold">Final da NFL</span>
+                    <span class="tag">Levi's Stadium</span>
+                </div>
+            </div>`;
+        }
+
+        let filtered = eventsDB;
+        // Lógica de Filtro
+        if (filterType === 'galo') filtered = eventsDB.filter(e => e.category === 'galo');
+        if (filterType === 'br') filtered = eventsDB.filter(e => e.category === 'br' || e.category === 'galo');
+        if (filterType === 'world') filtered = eventsDB.filter(e => e.category === 'world');
+        if (filterType === 'us') filtered = eventsDB.filter(e => e.category === 'us');
+        if (filterType === 'winter') filtered = eventsDB.filter(e => e.category === 'winter');
+
+        // Ordenar por dia
+        filtered.sort((a, b) => parseInt(a.day) - parseInt(b.day));
+
+        if(filtered.length === 0) {
+            feed.innerHTML += `<div style="text-align:center; color:#666; margin-top:50px;">Nenhum evento encontrado nesta categoria.</div>`;
+            return;
+        }
+
+        filtered.forEach(ev => {
+            const tierClass = ev.tier === 's' ? 'tier-s' : (ev.tier === 'a' ? 'tier-a' : 'tier-b');
+            
+            // Gerar Tags HTML
+            let tagsHTML = '';
+            ev.tags.forEach(t => {
+                let extraClass = '';
+                if(t.includes('Final') || t.includes('Taça') || t.includes('Global')) extraClass = 'gold';
+                if(t === 'Casa') extraClass = 'highlight';
+                if(t.includes('Liderança') || t.includes('Eliminatório')) extraClass = 'urgent';
+                tagsHTML += `<span class="tag ${extraClass}">${t}</span>`;
+            });
+
+            const html = `
+                <div class="event-card ${tierClass}">
+                    <div class="date-box">
+                        <span class="date-day">${ev.day}</span>
+                        <span class="date-month">FEV</span>
+                        <span class="date-time">${ev.time}</span>
+                    </div>
+
+                    <div class="match-info">
+                        <div class="league-name">
+                            ${ev.tier === 's' ? '⭐' : '•'} ${ev.league}
+                        </div>
+                        <div class="teams">${ev.match}</div>
+                        <div class="venue-info">
+                            📍 ${ev.venue}
+                        </div>
+                    </div>
+
+                    <div class="context-tags">
+                        ${tagsHTML}
+                    </div>
+                </div>
+            `;
+            feed.innerHTML += html;
+        });
+    }
+
+    function filterEvents(type) {
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        event.currentTarget.classList.add('active'); // Fixed: use currentTarget to catch the click on div
+        renderEvents(type);
+    }
+
+    // Init
+    renderEvents('all');
+
+</script>
+
+</body>
+</html>
